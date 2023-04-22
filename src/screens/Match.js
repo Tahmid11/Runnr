@@ -16,6 +16,7 @@ import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
 import { useNavigation } from '@react-navigation/native';
+import { list } from 'firebase/storage';
 
 
 
@@ -32,7 +33,7 @@ const Match = ({navigation}) => {
       console.log('getDocument(): ' , getDocument.id)
       console.log("getDocument.exists():", getDocument.exists());
       console.log("getDocument.data():", getDocument.data());
-      gettingUsersInformaiton()
+      
 
 
       if (!getDocument.exists()||
@@ -45,6 +46,8 @@ const Match = ({navigation}) => {
         }
       else{
         navigation.navigate('Match')
+        gettingUsersInformation()
+
       }
     }
     checkUserHasSignedUpFully();
@@ -65,7 +68,8 @@ const Match = ({navigation}) => {
 
   // Getting User Information.
 
-  const gettingUsersInformaiton=async()=>{
+  
+  const gettingUsersInformation=async()=>{
     const getReference=await getDocs(collection(db,'listOfUsers'))
     const gettingAllUsersInfo=[]
 
@@ -78,6 +82,7 @@ const Match = ({navigation}) => {
       }
     })
     setListOfUsers(gettingAllUsersInfo)
+    console.log('the url: ',listOfUsers.picURL)
 
    
   }
@@ -104,12 +109,11 @@ const Match = ({navigation}) => {
                     borderRadius: 4,
                     borderWidth: 2,
                     borderColor: "#E8E8E8",
-                    backgroundColor: "white",
+                    backgroundColor: "transparent",
                     height:400,
                     width:300}}>
-                    {/* <ImageBackground source={card.img} style={styles.cardImage}>
-                     
-                    </ImageBackground> */}
+                    <ImageBackground source={{uri:card.picURL}} style={styles.cardImage}>
+                    </ImageBackground>
                     <Text style={{textAlign: "center",fontSize: 50,color:'black'}}>
                         {card.name}
                       </Text>

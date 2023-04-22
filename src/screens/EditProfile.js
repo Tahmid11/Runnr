@@ -37,6 +37,7 @@ const EditProfile=()=>{
 
     // Profile Picture Addiing
     const [photoUrl, setPhotoUrl] = useState(null);
+    const[theURLOfPhoto, setTheURLOfPhoto]=useState(null)
 
   const handleSelectProfilePhoto = async () => {
    //   console.log(ImagePicker);
@@ -106,6 +107,7 @@ const EditProfile=()=>{
   const handleRetrievalOfImage=async(picRef,thePicture)=>{
     const picture=await getDownloadURL(picRef)
     setPhotoUrl(picture)
+    setTheURLOfPhoto(picture)
     setSuccesfulPosting(true)
     submissionSuccess()
   }
@@ -233,9 +235,10 @@ const EditProfile=()=>{
 
         console.log('postCodeOutcome:', postCodeOutcome);
         console.log('young:', young);
+        await handleImageSubmission()
 
 
-    if (postCodeOutcome&& !young &&userSelectedTime && photoUrl &&displayName){
+    if (postCodeOutcome&& !young &&userSelectedTime && theURLOfPhoto &&displayName){
         console.log('Your here!')
 
         try{
@@ -244,11 +247,12 @@ const EditProfile=()=>{
             dOB:`${z}/${y}/${x}`,
             borough:boroughOfUser,
             weeklyRunningTime:time,
-            timestamp:serverTimestamp()
+            timestamp:serverTimestamp(),
+            picURL:theURLOfPhoto
         }
 
         await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)
-        await handleImageSubmission()
+        
         // navigation.navigate("Setting", { screen: "edit", params: { disableBackButton: false, succesfulPosting: succesfulPosting } });
         navigation.dispatch(
           CommonActions.reset({
@@ -289,9 +293,6 @@ const EditProfile=()=>{
 return (
     <View style={styles.container}>
       <View style={styles.viewStyle}>
-
-  
-       
 
         <Dropdown 
             data={differentRunningTimes}
