@@ -248,7 +248,9 @@ const EditProfile=()=>{
             borough:boroughOfUser,
             weeklyRunningTime:time,
             timestamp:serverTimestamp(),
-            picURL:theURLOfPhoto
+            picURL:theURLOfPhoto,
+            allUsersSwipedOn:[],
+            allUsersSwipedRightOn:[]
         }
 
         await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)

@@ -1,7 +1,5 @@
 
-import React, { useState, useRef, useEffect} from 'react'
-import { ImageBackground, Text, View, Button, TextInput, TouchableOpacity, Modal,Image} from 'react-native'
-// import TinderCard from 'react-tinder-card'
+
 import CustomModal from "react-native-modal";
 import { SelectList } from 'react-native-dropdown-select-list'
 import { Dropdown } from 'react-native-element-dropdown';
@@ -10,8 +8,10 @@ import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepi
 
 // Image Picker= https://docs.expo.dev/versions/latest/sdk/imagepicker/#mediatypeoptions
 
-import * as ImagePicker from 'expo-image-picker';
-import { collection, doc, getDoc,  getDocs,  query, where } from "firebase/firestore";
+import React, { useState, useRef, useEffect} from 'react'
+import { ImageBackground, Text, View, Button, TextInput, TouchableOpacity, Modal,Image} from 'react-native'
+// import TinderCard from 'react-tinder-card'
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
@@ -53,18 +53,73 @@ const Match = ({navigation}) => {
     checkUserHasSignedUpFully();
   },[])
 
+
+  // useEffect(()=>{
+
+  // },[])
+
+  // Start Swiping Code
+  
   const swipe = useRef(null)
 
-  const handleLeftSwipe=()=>{
-    swipe.current.swipeLeft()
+  
+
+  const handleLeftSwipe=async(index)=>{
+    console.log('It gets to this function.')
+    console.log('Handling left swipe for card index:', index);
+    if (index >= listOfUsers.length) {
+      console.log("No more cards left to swipe.");
+      return;
+    }
+    try{
+      if (swipe.current){
+        console.log('This is the card index:',index)
+        console.log('The current at position', index, ' is :', listOfUsers[index])
+        const currentCardInfo=listOfUsers[index]
+        const getReference=doc(db,'listOfUsers',user.uid)
+        await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
+      }
+      
+      
+      
+      
+      
+    }
+    catch(err){
+      console.log('The error is ', err)
+    }
+    
 
   };
 
-  const handleSwipeRight=()=>{
-    swipe.current.swipeRight()
+
+
+  const handleSwipeRight=async(index)=>{
+    console.log('It gets to right hand swipe function.')
+    console.log('Handling right swipe for card index:', index);
+
+    try{
+      if (swipe.current){
+
+        console.log('This is the card index:',index)
+        console.log('The current at position', index, ' is :', listOfUsers[index])
+        const currentCardInfo=listOfUsers[index]
+        const getReference=doc(db,'listOfUsers',user.uid)
+        await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
+        await updateDoc(getReference, {allUsersSwipedRightOn: arrayUnion(currentCardInfo.id),merge: true,});
+      }
+      // swipe.current.swipeRight()
+      
+    }
+    catch(err){
+      console.log('The error is ', err)
+    }
+    
   }
 
   const [hasSwipedAll, setHasSwipedAll]=useState(false)
+
+  // End Of Swiping Code
 
   // Getting User Information.
 
@@ -83,9 +138,13 @@ const Match = ({navigation}) => {
     })
     setListOfUsers(gettingAllUsersInfo)
     console.log('the url: ',listOfUsers.picURL)
+    
 
    
   }
+ 
+
+  
 
   return (
     <View style={styles.container}>
@@ -101,6 +160,23 @@ const Match = ({navigation}) => {
           disableTopSwipe={true}
           disableBottomSwipe={true}
           onSwipedAll={()=>{setHasSwipedAll(true)}}
+          onSwipedLeft={(index)=>{
+            // if (index!==cardIndex){
+            //   handleLeftSwipe(index)
+            //   setCardIndex(index)
+            //   console.log('Updated cardIndex after left swipe:', cardIndex);
+
+            // }
+            handleLeftSwipe(index);
+
+
+            
+          }}
+          onSwipedRight={(index)=>{
+            handleSwipeRight(index);
+
+            
+          }}
           ref={swipe}
           renderCard={
             (card, index) => {
@@ -128,17 +204,7 @@ const Match = ({navigation}) => {
           <Text style={{marginTop: 20, alignContent:'center', color:'blue', left:200}}>No more cards left to swipe.</Text>
           </View>
         )}
-        {!hasSwipedAll && (
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity style={styles.swipeLeftButton} onPress={handleLeftSwipe}>
-              <Text style={styles.swipeButtonText}>Swipe Left</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.swipeRightButton} onPress={handleSwipeRight}>
-              <Text style={styles.swipeButtonText}>Swipe Right</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
+        
         
         
       </View>
