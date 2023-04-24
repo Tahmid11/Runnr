@@ -11,12 +11,12 @@ import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepi
 import React, { useState, useRef, useEffect} from 'react'
 import { ImageBackground, Text, View, Button, TextInput, TouchableOpacity, Modal,Image} from 'react-native'
 // import TinderCard from 'react-tinder-card'
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, query, where } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
 import { useNavigation } from '@react-navigation/native';
-import { list } from 'firebase/storage';
+
 
 
 
@@ -24,7 +24,14 @@ const Match = ({navigation}) => {
 
 
   const [listOfUsers,setListOfUsers]=useState([])
+  
   const {user}=callingContext();
+  const [matchFound, setMatchFound] = useState(false);
+
+  const[imageOfMatchedUser, setImageOfMatchedUser]=useState(null)
+  const[imageOfCurrentUser, setImageOfCurrentUser]=useState(null)
+
+
 
   useEffect(()=>{
     const checkUserHasSignedUpFully=async()=>{
@@ -34,8 +41,6 @@ const Match = ({navigation}) => {
       console.log("getDocument.exists():", getDocument.exists());
       console.log("getDocument.data():", getDocument.data());
       
-
-
       if (!getDocument.exists()||
       !getDocument.data().borough ||
       !getDocument.data().dOB ||
@@ -45,32 +50,54 @@ const Match = ({navigation}) => {
         navigation.navigate("Setting", { screen: "edit", params: { disableBackButton: true } });
         }
       else{
+        setImageOfCurrentUser(getDocument.data().picURL)
         navigation.navigate('Match')
         gettingUsersInformation()
 
       }
     }
+   
     checkUserHasSignedUpFully();
-  },[])
+    
+    
+  },[navigation,user.uid])
 
+  useEffect(()=>{
+    const checkingUsersHaveMatchedPreSWipe=async()=>{
+      const documentLocation=doc(db,'listOfUsers', user.uid)
+      const getDocumentOfCurrentUserLoggedIn=await getDoc(documentLocation)
+      const getReference=await getDocs(collection(db,'listOfUsers'))
 
-  // useEffect(()=>{
+      getReference.forEach((doc)=>{
+        if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
+          if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
+            setShowMatchPopup(true)
+            setMatchedUserData(doc.data())
+            setImageOfMatchedUser(doc.data().picURL)
+          }
+        }
 
-  // },[])
+      })
+    }
+
+    checkingUsersHaveMatchedPreSWipe();
+  },[listOfUsers])
+
 
   // Start Swiping Code
   
   const swipe = useRef(null)
+    
+    const [showMatchPopup, setShowMatchPopup] = useState(false);
+    const [matchedUserData, setMatchedUserData] = useState(null);
+
+  
 
   
 
   const handleLeftSwipe=async(index)=>{
     console.log('It gets to this function.')
     console.log('Handling left swipe for card index:', index);
-    if (index >= listOfUsers.length) {
-      console.log("No more cards left to swipe.");
-      return;
-    }
     try{
       if (swipe.current){
         console.log('This is the card index:',index)
@@ -79,15 +106,11 @@ const Match = ({navigation}) => {
         const getReference=doc(db,'listOfUsers',user.uid)
         await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
       }
-      
-      
-      
-      
-      
     }
     catch(err){
       console.log('The error is ', err)
     }
+    
     
 
   };
@@ -104,44 +127,78 @@ const Match = ({navigation}) => {
         console.log('This is the card index:',index)
         console.log('The current at position', index, ' is :', listOfUsers[index])
         const currentCardInfo=listOfUsers[index]
+        console.log('Gets here')
+        checkingIfUsersHaveMatched(currentCardInfo)
+        console.log('Ends here')
         const getReference=doc(db,'listOfUsers',user.uid)
         await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
         await updateDoc(getReference, {allUsersSwipedRightOn: arrayUnion(currentCardInfo.id),merge: true,});
       }
-      // swipe.current.swipeRight()
+      
       
     }
     catch(err){
       console.log('The error is ', err)
     }
-    
   }
+  const checkingIfUsersHaveMatched=async(currentCardInfo)=>{
 
-  const [hasSwipedAll, setHasSwipedAll]=useState(false)
+   
+   // Listen for changes in the current user's data
+const currentUserRef = doc(db, "listOfUsers", user.uid);
+const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapshot) => {
+  const currentUserData = currentUserDocSnapshot.data();
+
+  // Check if the current user has swiped right on the other user
+  if (currentUserData.allUsersSwipedRightOn && currentUserData.allUsersSwipedRightOn.includes(currentCardInfo.id)) {
+    const otherUserRef = doc(db, "listOfUsers", currentCardInfo.id);
+
+    // Listen for changes in the other user's data
+    const unsubscribeOtherUser = onSnapshot(otherUserRef, (otherUserDocSnapshot) => {
+      const otherUserData = otherUserDocSnapshot.data();
+
+      // Check if the other user has swiped right on the current user
+      if (otherUserData.allUsersSwipedRightOn && otherUserData.allUsersSwipedRightOn.includes(user.uid)) {
+        setMatchedUserData(currentCardInfo);
+        setMatchFound(true);
+        setImageOfMatchedUser(currentCardInfo.picURL);
+        setShowMatchPopup(true);
+      }
+    });
+  }
+});
+  return unsubscribeCurrentUser;
+  }
+  const [showNoMoreUsers, setShowNoMoreUsers] = useState(false);
+
 
   // End Of Swiping Code
 
-  // Getting User Information.
 
-  
+
+  // Getting User Information.
   const gettingUsersInformation=async()=>{
     const getReference=await getDocs(collection(db,'listOfUsers'))
+    const getReferenceToUser=await getDoc(doc(db,'listOfUsers', user.uid))
     const gettingAllUsersInfo=[]
+    const storeOfUserSwipedOn=getReferenceToUser.data().allUsersSwipedOn || []
 
 
     getReference.forEach((doc)=>{
-      if (doc.id!==user.uid){
+      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id)){
         console.log('The doc id:', doc.id, ' and its data: ', doc.data())
         // Creating an array of objects.
         gettingAllUsersInfo.push({id: doc.id, ...doc.data() })
       }
     })
-    setListOfUsers(gettingAllUsersInfo)
-    console.log('the url: ',listOfUsers.picURL)
-    
-
-   
+     setListOfUsers(gettingAllUsersInfo)
+     if (gettingAllUsersInfo.length === 0) {
+      setShowNoMoreUsers(true);
+    } else {
+      setShowNoMoreUsers(false);
+    }
   }
+
  
 
   
@@ -150,7 +207,13 @@ const Match = ({navigation}) => {
     <View style={styles.container}>
       <Text style={styles.header}>React Native Tinder Card</Text>
       <View style={{position:'absolute', alignItems:'center'}}>
-      <Swiper
+        {showNoMoreUsers?(<Text style={{marginTop: 50, alignContent:'center', color:'blue', left:20, fontSize:30}}>No more users to swipe on</Text>):(
+          <View
+          
+            atyle={{zIndex: showMatchPopup ? -1 : 1, }}
+          >
+             
+          <Swiper
           cards={listOfUsers}
           cardIndex={0}
           infinite={false}
@@ -159,23 +222,14 @@ const Match = ({navigation}) => {
           showSecondCard={true}
           disableTopSwipe={true}
           disableBottomSwipe={true}
-          onSwipedAll={()=>{setHasSwipedAll(true)}}
+          onSwipedAll={()=>{
+            setShowNoMoreUsers(true)
+          }}
           onSwipedLeft={(index)=>{
-            // if (index!==cardIndex){
-            //   handleLeftSwipe(index)
-            //   setCardIndex(index)
-            //   console.log('Updated cardIndex after left swipe:', cardIndex);
-
-            // }
             handleLeftSwipe(index);
-
-
-            
           }}
           onSwipedRight={(index)=>{
             handleSwipeRight(index);
-
-            
           }}
           ref={swipe}
           renderCard={
@@ -199,19 +253,74 @@ const Match = ({navigation}) => {
           }
           stackSize={5}
         />
-         {hasSwipedAll && (
-          <View style={{flex:1,top:10, position: 'absolute', zIndex: 2, color:'transparent'}}> 
-          <Text style={{marginTop: 20, alignContent:'center', color:'blue', left:200}}>No more cards left to swipe.</Text>
-          </View>
+        </View>
+
         )}
         
         
-        
       </View>
+      {showMatchPopup&& matchedUserData ? (
+        <Modal visible={showMatchPopup} animationType="slide" transparent={true}>
+        <View style={{flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)'
+          // zIndex: 100, // Add this line
+    }}>
+          <Text style=
+          {{fontSize: 24,
+            fontWeight: 'bold',
+            marginBottom: 20, 
+            color:'blue'
+            }}>It's a match!</Text>
+          <Text 
+          style={{fontSize: 18,
+            textAlign: 'center',
+            marginBottom: 20,
+            color:'blue'
+            }}>
+            You and {matchedUserData.name} have both swiped right on each other.
+          </Text>
+          <View style={{flexDirection:'row' }}>
+          <Image
+          source={{ uri: imageOfCurrentUser }}
+          style={{ width: 100, height: 100, borderRadius: 50 }}
+        />
+        <Image
+        source={{ uri: imageOfMatchedUser }}
+        style={{ width: 100, height: 100, borderRadius: 50 }}
+      />
+      </View>
+        
+          <View style=
+          {{flexDirection: 'row',
+            justifyContent: 'space-around',
+            width: '80%',}}>
+            <Button
+              title="Keep Swiping"
+              onPress={() => setShowMatchPopup(false)}
+            />
+            <Button
+              title="Send a Message"
+              onPress={() => {
+                setShowMatchPopup(false);
+                navigation.navigate('Message', { matchedUser: matchedUserData });
+              }}
+            />
+            
+          </View>
+        </View>
+      </Modal>
 
-      
+
+      ):(
+        null
+
+      )
+        }
 
     </View>
+
   )
 }
 
