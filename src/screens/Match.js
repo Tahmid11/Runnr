@@ -11,11 +11,12 @@ import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepi
 import React, { useState, useRef, useEffect} from 'react'
 import { ImageBackground, Text, View, Button, TextInput, TouchableOpacity, Modal,Image} from 'react-native'
 // import TinderCard from 'react-tinder-card'
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
 import { useNavigation } from '@react-navigation/native';
+import Message from "./MessageScreen";
 
 
 
@@ -73,6 +74,7 @@ const Match = ({navigation}) => {
           if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
             setShowMatchPopup(true)
             setMatchedUserData(doc.data())
+            console.log('This is matched user data: ', matchedUserData)
             setImageOfMatchedUser(doc.data().picURL)
           }
         }
@@ -110,7 +112,6 @@ const Match = ({navigation}) => {
     catch(err){
       console.log('The error is ', err)
     }
-    
     
 
   };
@@ -198,6 +199,27 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
       setShowNoMoreUsers(false);
     }
   }
+
+  // Creating a conversation:
+  const creatingConversation=async(nameOfPerson)=>{
+    const getReference=await getDocs(collection(db,'listOfUsers'))
+    let id=null;
+    getReference.forEach((doc)=>{
+      if (doc.data().name===nameOfPerson){
+        id=doc.id
+      }
+    })
+    const detailsToStartConversationToSendToFirebase={
+      userWhoIsLoggedInID:user.uid,
+      theOtherUserInConversation:id ,
+      messages:[]
+    }
+    await setDoc(doc(db, "ConversationsOfUsers",user.uid),detailsToStartConversationToSendToFirebase)
+
+  }
+
+
+  
 
  
 
@@ -304,7 +326,8 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
               title="Send a Message"
               onPress={() => {
                 setShowMatchPopup(false);
-                navigation.navigate('Message', { matchedUser: matchedUserData });
+                creatingConversation(matchedUserData.name)
+                navigation.navigate('Message');
               }}
             />
             
