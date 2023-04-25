@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 // Navigation
 // import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -14,7 +14,7 @@ import Message from '../screens/MessageScreen';
 import Activity from '../screens/Activity';
 import Login from '../screens/Login';
 import PopupSreen from '../screens/PopupScreen';
-
+import Conversation from '../screens/ConversationScreen';
 import callingContext from '../components/callingContext';
 import { NavigationContainer } from '@react-navigation/native';
 
@@ -22,11 +22,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Entypo'
 
 
+
 // Creating the different navigation.
 const bottomTabs = createBottomTabNavigator();
 const EdittingProfile=createNativeStackNavigator();
 const loginStackNav=createNativeStackNavigator();
 const modalScreenPopUpNav=createNativeStackNavigator();
+const messageStackNav=createNativeStackNavigator()
 // Creation of stack navigator for setting and editing profile page.
 const SettingScreen=()=>{
   return(
@@ -62,6 +64,17 @@ const ModalScreen=()=>{
   </modalScreenPopUpNav.Navigator>)
 }
 
+const MessageScreen=()=>{
+  return(
+    <messageStackNav.Navigator>
+      <messageStackNav.Screen name='Chats' component={Message}  options={{title:'Chats', headerTitleAlign:'center'}}/>
+      <messageStackNav.Screen name='Conversation' component={Conversation} options={({ route }) => ({
+          title: route.params?.nameOfPerson || "Conversation",
+        })}/>
+    </messageStackNav.Navigator>
+  )
+}
+
 // Bottom tab navigator.
 export default function Navigation() {
   const {user}=callingContext();
@@ -74,7 +87,7 @@ export default function Navigation() {
       {user ?(
           <bottomTabs.Navigator>
           <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false}}/>
-          <bottomTabs.Screen name='Message' component={Message} options={{ tabBarIcon: () => <Icon name="chat"  size={27} />}} />
+          <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ tabBarIcon: () => <Icon name="chat"  size={27} />,  headerShown:false}} />
           <bottomTabs.Screen name='Activity' component={Activity}/>
           <bottomTabs.Screen name='Setting' options={{title:'Settings',headerShown:false}} component={SettingScreen} />
           </bottomTabs.Navigator>
@@ -86,3 +99,5 @@ export default function Navigation() {
       </NavigationContainer>
   )
 };
+
+

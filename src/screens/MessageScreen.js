@@ -3,10 +3,11 @@ import { Text,View,TouchableOpacity ,Image, StyleSheet, FlatList} from "react-na
 import { query, onSnapshot,collection,where, getDoc, doc, getDocs } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import callingContext from '../components/callingContext';
+import Conversation from "./ConversationScreen";
 
 
 
-const Message=()=>{
+const Message=({navigation})=>{
     const {user}=callingContext();
     const [conversations,setConversations]=useState([])
 
@@ -28,7 +29,6 @@ const Message=()=>{
       
         fetchConversationsAndPictures();
       
-        // Clean up function not needed since you're using getDocs instead of onSnapshot
       }, [user.uid]);
       
       const gettingTheProfile = async (idOfUser) => {
@@ -41,6 +41,7 @@ const Message=()=>{
         const getDocument = await getDoc(getProfilePicOfOtherUserInConvo);
         return getDocument.data().name;
       };
+      console.log('this is conversations:',conversations)
       
 
     return (
@@ -54,6 +55,7 @@ const Message=()=>{
                 onPress={() =>
                   navigation.navigate("Conversation", {
                     conversationId: conversation.id,
+                    nameOfPerson: conversation.nameOfPerson,
                   })
                 }
                 style={{
@@ -82,7 +84,13 @@ const Message=()=>{
                     {conversation.nameOfPerson}
                   </Text>
                   {/* Replace "Latest message" with the actual message */}
-                  <Text style={{ color: "gray", fontSize: 14 }}>Latest message</Text>
+
+                  {
+                   conversations.messages?(
+                    <Text style={{ color: "gray", fontSize: 14 }}>{conversations.messages[conversations.messages.length]}</Text>
+                   ):(<Text style={{ color: "gray", fontSize: 14 }}></Text>)
+                  }
+                  
                 </View>
               </TouchableOpacity>
             )}
@@ -93,35 +101,3 @@ const Message=()=>{
 }
 
 export default Message;
-
-{/* {conversations.map((conversation) => (
-      <TouchableOpacity
-        key={conversation.id}
-        onPress={() =>
-          navigation.navigate('Conversation', { conversationId: conversation.id })
-        }
-        style={{height:10, width:10}}
-      >
-        <Text style={{fontSize:10, color:10}}>{conversation.id}</Text>
-      </TouchableOpacity>
-    ))} */}
-
-     // useEffect(()=>{
-    //     const gettingConversation=async()=>{
-    //         const arrayOfConversations=[]
-    //         const gettingConvoRef=doc(db,'ConversationsOfUsers', user.uid)
-    //         const getConvo=await getDoc(gettingConvoRef)
-    //         console.log('This is the data of get convo', getConvo.data())
-    //         if (getConvo.id===user.uid){
-    //             arrayOfConversations.push({id:getConvo.id,... getConvo.data() })
-    //         }
-    //         setConversations(arrayOfConversations)
-    //     }
-    //     gettingConversation()
-    // },[user.uid])
-
-    // const unsub=onSnapshot(doc(db,'ConversationsOfUsers',user.uid),(doc)=>{
-    //     console.log('current data;', doc.data())
-    // })
-
-    // console.log('This is conversation id:', conversations)
