@@ -51,20 +51,22 @@ const EditProfile=()=>{
          //   console.log(result);
        
            if (!result.canceled) {
-            //  setPhotoUrl(result.assets[0].uri)
-             if(user){
+             setPhotoUrl(result.assets[0].uri)
+             console.log('PhotoURL is set.')
+            }
+            //  if(user){
                 
-                setPhotoUrl(result.assets[0].uri);
-             }
+            //     setPhotoUrl(result.assets[0].uri);
+            //  }
              else{
                 console.log('User is not logged in.')
              }
              
            }
-     } catch (error) {
-       console.error("Please try picking an image again:", error);
+           catch (error) {
+            console.error("Please try picking an image again:", error);
+     } 
      }
-   };
 
    useEffect(()=>{
     if (photoUrl){
@@ -74,42 +76,32 @@ const EditProfile=()=>{
    },[photoUrl])
  
    const handleImageSubmission = async () => {
+    let somePic;
       if (photoUrl) {
           console.log('IT reaches to this function and the photoURL is ' + photoUrl);
-          const token = await user.getIdToken();
-          console.log('User token:', token);
 
             // const pictureReference = ref(storage, `images/${user.uid}/profilePic.jpeg`, { auth: token });
             const picRef=ref(storage, `profilePictures/${user.uid}/pic`);
             const fetchedPhotoUrl=await fetch(photoUrl)
             const thePicture = await fetchedPhotoUrl.blob();
             try {
-              console.log('Request',{
-                auth:{
-                  uid:user.uid,
-                  token:token
-                },
-                path:`profilePictures/${user.uid}/pic`,
-                method:'create'
-              })
               await uploadBytes(picRef, thePicture);
               console.log("Image uploaded successfully");
-              handleRetrievalOfImage(picRef, thePicture);
-              navigation.navigate("Match");
+              somePic=await handleRetrievalOfImage(picRef)
+              return somePic;
             } catch (error) {
               console.log(error);
             }
       } else {
         console.log('photo is empty.');
       }
+      
   };
 
-  const handleRetrievalOfImage=async(picRef,thePicture)=>{
+  const handleRetrievalOfImage=async(picRef)=>{
     const picture=await getDownloadURL(picRef)
-    setPhotoUrl(picture)
-    setTheURLOfPhoto(picture)
-    setSuccesfulPosting(true)
-    submissionSuccess()
+    return picture;
+    
   }
    
 
@@ -233,12 +225,17 @@ const EditProfile=()=>{
 
   const handleEditProfileSubmission=async ()=>{
 
+        const piczx=await handleImageSubmission()
+        console.log('This is picxzs' , piczx)
         console.log('postCodeOutcome:', postCodeOutcome);
         console.log('young:', young);
-        await handleImageSubmission()
+        console.log('userSelectedTime', userSelectedTime)
+        console.log('PhotoURL:', theURLOfPhoto)
+        console.log('The name of the guy: ', displayName)
+        
 
 
-    if (postCodeOutcome&& !young &&userSelectedTime && theURLOfPhoto &&displayName){
+    if (postCodeOutcome&& !young &&userSelectedTime && piczx &&displayName){
         console.log('Your here!')
 
         try{
@@ -248,14 +245,14 @@ const EditProfile=()=>{
             borough:boroughOfUser,
             weeklyRunningTime:time,
             timestamp:serverTimestamp(),
-            picURL:theURLOfPhoto,
+            picURL:piczx,
             allUsersSwipedOn:[],
             allUsersSwipedRightOn:[]
         }
+        console.log('This is the stuff that is being sent to firebase:', userDetailsToSendToFirebase)
 
         await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)
         
-        // navigation.navigate("Setting", { screen: "edit", params: { disableBackButton: false, succesfulPosting: succesfulPosting } });
         navigation.dispatch(
           CommonActions.reset({
             index: 1,
@@ -266,15 +263,11 @@ const EditProfile=()=>{
         );
         console.log('Woooo')
         console.log('SUCCESSFUL!')
-
-      
+        submissionSuccess()
       }
-        
-        catch(error){
-          
+        catch(error){   
           console.log('This is the error:'.error)
         }
-        
     }
     else{
         console.log('Wrong.')
@@ -284,7 +277,6 @@ const EditProfile=()=>{
   const submissionSuccess=()=>{
     if (succesfulPosting){
       navigation.navigate('Match');
-      
     }
 
   }
@@ -388,21 +380,22 @@ return (
                 <Text>Nice!</Text>
               )
             }
-        <TouchableOpacity style={{justifyContent:'center',top:20,borderWidth:1,left:0, borderRadius: 10}} 
-        onPress={handleEditProfileSubmission}
-        >
-            <Text style={{textAlign:'center'}}>Submit</Text>
-        </TouchableOpacity>
+        
       </View>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <TouchableOpacity onPress={handleSelectProfilePhoto}>
+        <TouchableOpacity onPress={handleSelectProfilePhoto} style={{height:50}}>
                 
-                <Text>Pick an IMage</Text>
+                <Text>Pick an Image</Text>
             </TouchableOpacity>
-        <Image style={{height:100, width:200}}source={{uri:photoUrl}}/>
+        <Image style={{height:90, width:200}}source={{uri:photoUrl}}/>
 
 
         </View>
+        <TouchableOpacity style={{justifyContent:'center',bottom:30,borderWidth:1,left:0, borderRadius: 10}} 
+        onPress={handleEditProfileSubmission}
+        >
+            <Text style={{textAlign:'center', color:'red'}}>Submit</Text>
+        </TouchableOpacity>
 
     </View>
   );
@@ -478,7 +471,6 @@ const styles = StyleSheet.create({
             
             
         }
-    
   
   })
 

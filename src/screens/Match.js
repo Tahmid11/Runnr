@@ -32,6 +32,11 @@ const Match = ({navigation}) => {
   const[imageOfMatchedUser, setImageOfMatchedUser]=useState(null)
   const[imageOfCurrentUser, setImageOfCurrentUser]=useState(null)
 
+  const[getIDOfOtherUser,setIDOfOtherUser]=useState(null)
+
+  const [convoCheckingFinished, setConvoCheckingFinished] = useState(false);
+
+
 
 
   useEffect(()=>{
@@ -73,7 +78,10 @@ const Match = ({navigation}) => {
         if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
           if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
             setShowMatchPopup(true)
+            setIDOfOtherUser(doc.id)
+            console.log('This is the id of the other user', getIDOfOtherUser)
             setMatchedUserData(doc.data())
+
             console.log('This is matched user data: ', matchedUserData)
             setImageOfMatchedUser(doc.data().picURL)
           }
@@ -209,14 +217,47 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
         id=doc.id
       }
     })
-    const detailsToStartConversationToSendToFirebase={
-      userWhoIsLoggedInID:user.uid,
-      theOtherUserInConversation:id ,
-      messages:[]
-    }
-    await setDoc(doc(db, "ConversationsOfUsers",user.uid),detailsToStartConversationToSendToFirebase)
 
+    const getReferenceToMatch= doc(db,'ConversationsOfUsers', `${user.uid}${id}`)
+    const documentOfConvo=await getDoc(getReferenceToMatch);
+    if(!documentOfConvo){
+      const detailsToStartConversationToSendToFirebase={
+        userWhoIsLoggedInID:user.uid,
+        theOtherUserInConversation:id ,
+        messages:[]
+      }
+      await setDoc(doc(db, "ConversationsOfUsers",`${user.uid}${id}`),detailsToStartConversationToSendToFirebase)
+    }
+    
   }
+
+
+  
+    const checkingIfUsersAlreadyHaveAConvo=async()=>{
+      console.log('reach this function')
+
+      const getReferenceToMatch= doc(db,'ConversationsOfUsers', `${user.uid}${getIDOfOtherUser}`)
+      const documentOfConvo=await getDoc(getReferenceToMatch);
+      // console.log('This is the ',documentOfConvo)
+      if (documentOfConvo.exists()){
+        console.log('This is getting here TO SHOW THE USERS ALREADY HAVE A CONVO')
+        setShowMatchPopup(false)
+      }
+      else{
+        setShowMatchPopup(true)
+      }
+      setConvoCheckingFinished(true)
+    }
+   
+
+  
+  useEffect(() => {
+    if (getIDOfOtherUser) {
+      checkingIfUsersAlreadyHaveAConvo();
+    }
+  }, [getIDOfOtherUser]);
+  
+  
 
 
   
@@ -281,7 +322,7 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
         
         
       </View>
-      {showMatchPopup&& matchedUserData ? (
+      {showMatchPopup&& matchedUserData && convoCheckingFinished ? (
         <Modal visible={showMatchPopup} animationType="slide" transparent={true}>
         <View style={{flex: 1,
           justifyContent: 'center',

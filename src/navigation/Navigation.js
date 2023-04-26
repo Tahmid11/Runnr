@@ -1,10 +1,12 @@
 
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React,{useState,useEffect} from 'react';
+import { View,  Dimensions, Keyboard} from 'react-native';
 // Navigation
 // import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+
 
 // Importing the different screens.
 import Match from '../screens/Match';
@@ -20,6 +22,7 @@ import { NavigationContainer } from '@react-navigation/native';
 
 
 import Icon from 'react-native-vector-icons/Entypo'
+
 
 
 
@@ -77,26 +80,34 @@ const MessageScreen=()=>{
 
 // Bottom tab navigator.
 export default function Navigation() {
-  const {user}=callingContext();
-  // console.log(ifUserHasLoggedIn())
+  const { width, height } = Dimensions.get("window")
+
+
+  const { user } = callingContext();
+
 
   return (
-  
-    <NavigationContainer>
+    
+    <NavigationContainer >
       {/* HOC; surrounding the children and passing data from the parent to the children.  */}
       {user ?(
-          <bottomTabs.Navigator>
+          <bottomTabs.Navigator
+          options={{ keyboardHidesTabBar: true, tabBarStyle: [{ display: 'flex' }, null] }}
+        >
           <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false}}/>
-          <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ tabBarIcon: () => <Icon name="chat"  size={27} />,  headerShown:false}} />
+          <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ 
+            tabBarIcon: () => <Icon name="chat"  size={27} /> ,headerShown:false}} />
           <bottomTabs.Screen name='Activity' component={Activity}/>
           <bottomTabs.Screen name='Setting' options={{title:'Settings',headerShown:false}} component={SettingScreen} />
           </bottomTabs.Navigator>
+
        ):( 
         <View style={{ flex: 1 }}>
         <LoginScreen/>
         </View> 
       )} 
       </NavigationContainer>
+      
   )
 };
 
