@@ -11,7 +11,7 @@ import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepi
 import React, { useState, useRef, useEffect} from 'react'
 import { ImageBackground, Text, View, Button, TextInput, TouchableOpacity, Modal,Image} from 'react-native'
 // import TinderCard from 'react-tinder-card'
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
@@ -58,7 +58,7 @@ const Match = ({navigation}) => {
       else{
         setImageOfCurrentUser(getDocument.data().picURL)
         navigation.navigate('Match')
-        gettingUsersInformation()
+        // gettingUsersInformation()
 
       }
     }
@@ -75,17 +75,21 @@ const Match = ({navigation}) => {
       const getReference=await getDocs(collection(db,'listOfUsers'))
 
       getReference.forEach((doc)=>{
-        if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
-          if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
-            setShowMatchPopup(true)
-            setIDOfOtherUser(doc.id)
-            console.log('This is the id of the other user', getIDOfOtherUser)
-            setMatchedUserData(doc.data())
-
-            console.log('This is matched user data: ', matchedUserData)
-            setImageOfMatchedUser(doc.data().picURL)
+        if(getDocumentOfCurrentUserLoggedIn.data() && getDocumentOfCurrentUserLoggedIn){
+          if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
+            if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
+              setShowMatchPopup(true)
+              setIDOfOtherUser(doc.id)
+              console.log('This is the id of the other user', getIDOfOtherUser)
+              setMatchedUserData(doc.data())
+  
+              console.log('This is matched user data: ', matchedUserData)
+              setImageOfMatchedUser(doc.data().picURL)
+            }
           }
+
         }
+        
 
       })
     }
@@ -115,8 +119,12 @@ const Match = ({navigation}) => {
         const currentCardInfo=listOfUsers[index]
         const getReference=doc(db,'listOfUsers',user.uid)
         await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
+        const updatedListOfUsers = await getUpdatedListOfUsers();
+        setListOfUsers(updatedListOfUsers);
       }
+
     }
+     
     catch(err){
       console.log('The error is ', err)
     }
@@ -129,7 +137,7 @@ const Match = ({navigation}) => {
   const handleSwipeRight=async(index)=>{
     console.log('It gets to right hand swipe function.')
     console.log('Handling right swipe for card index:', index);
-
+    
     try{
       if (swipe.current){
 
@@ -142,7 +150,10 @@ const Match = ({navigation}) => {
         const getReference=doc(db,'listOfUsers',user.uid)
         await updateDoc(getReference, {allUsersSwipedOn: arrayUnion(currentCardInfo.id),merge: true,});
         await updateDoc(getReference, {allUsersSwipedRightOn: arrayUnion(currentCardInfo.id),merge: true,});
+        const updatedListOfUsers = await getUpdatedListOfUsers();
+        setListOfUsers(updatedListOfUsers);
       }
+      
       
       
     }
@@ -150,9 +161,23 @@ const Match = ({navigation}) => {
       console.log('The error is ', err)
     }
   }
-  const checkingIfUsersHaveMatched=async(currentCardInfo)=>{
 
-   
+  const getUpdatedListOfUsers = async () => {
+    const gettingDocsFromUserCollection = collection(db, "listOfUsers");
+    const querySnapshot = await getDocs(gettingDocsFromUserCollection);
+    const gettingAllUsersInfo = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (doc.id !== user.uid && (!data.allUsersSwipedOn || !data.allUsersSwipedOn.includes(user.uid))) {
+        gettingAllUsersInfo.push({ id: doc.id, ...data });
+      }
+    });
+    return gettingAllUsersInfo;
+  };
+  
+
+
+  const checkingIfUsersHaveMatched=async(currentCardInfo)=>{
    // Listen for changes in the current user's data
 const currentUserRef = doc(db, "listOfUsers", user.uid);
 const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapshot) => {
@@ -176,70 +201,127 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
     });
   }
 });
-  return unsubscribeCurrentUser;
+   unsubscribeCurrentUser();
   }
+
   const [showNoMoreUsers, setShowNoMoreUsers] = useState(false);
 
 
   // End Of Swiping Code
+  useEffect(() => {
+    const gettingUsersInformation = async () => {
+      const gettingDocsFromUserCollection = collection(db, "listOfUsers");
+      
+  
+      // Use the onSnapshot listener on the collection
+      const unsubscribe = onSnapshot(gettingDocsFromUserCollection, (querySnapshot) => {
+        let gettingAllUsersInfo = [];
+        querySnapshot.forEach((doc) => {
+          const storeOfUserSwipedOn=doc.data().allUsersSwipedOn || []
+          if (doc.id !== user.uid && !storeOfUserSwipedOn.includes(doc.id)) {
+            gettingAllUsersInfo.push({id:doc.id, ... doc.data()})
+            
+          }
+        });
+        setListOfUsers(gettingAllUsersInfo);
+        if (gettingAllUsersInfo.length === 0) {
+          setShowNoMoreUsers(true);
+        } else {
+          setShowNoMoreUsers(false);
+        }
+      });
+  
+      return unsubscribe;
+    };
+  
+    gettingUsersInformation();
+  }, [user]);
+  
 
 
+  // useEffect(() => {
+  //   const gettingUsersInformation = async () => {
+  //     const gettingDocsFromUserCollection = collection(db, "listOfUsers");
+  //     let gettingAllUsersInfo=[]
+  //     // const storeOfUserSwipedOn=getReferenceToUser.data().allUsersSwipedOn || []
+  //     const q = query(gettingDocsFromUserCollection);
+  //     const unsubscribe = onSnapshot(q, (querySnapshot) => {
+  //       querySnapshot.forEach((doc) => {
+  //         if(doc.id!==user.uid ){
+  //           if(doc.data().allUsersSwipedOn){
+  //             if(!doc.data().allUsersSwipedOn.includes(user.uid)){
+  //               gettingAllUsersInfo.push(doc.id,...doc.data())
+  //             }
+  //             else{
+  //               gettingAllUsersInfo.push(doc.id,...doc.data())
 
-  // Getting User Information.
-  const gettingUsersInformation=async()=>{
-    const getReference=await getDocs(collection(db,'listOfUsers'))
-    const getReferenceToUser=await getDoc(doc(db,'listOfUsers', user.uid))
-    const gettingAllUsersInfo=[]
-    const storeOfUserSwipedOn=getReferenceToUser.data().allUsersSwipedOn || []
+  //             }
+  //           }
+  //         }
+  //       });
+  //       setListOfUsers(gettingAllUsersInfo)
+  //       if (gettingAllUsersInfo.length === 0) {
+  //         setShowNoMoreUsers(true);
+  //       } 
+  //       else {
+  //         setShowNoMoreUsers(false);
+  //       }
+  //     });
+      
+     
+  //     return unsubscribe;
+  //   };
+    
+    
+  
+  //   gettingUsersInformation();
+  // }, [user]);
+  const creatingConversation=async()=>{
+    console.log('Reaches this function of convo')
+    const id=getIDOfOtherUser;
+    const generatedConvoID=generateCombinedId(user.uid,id)
+    const getRefernceToFindConvo=doc(db,'ConversationsOfUsers', generatedConvoID)
+    console.log('This is what is inside of getRefernceToFindConvo : ',getRefernceToFindConvo)
+    const gettingConvoDocument=await getDoc(getRefernceToFindConvo)
+    console.log('This is what is inside of  gettingConvoDocument: ',gettingConvoDocument)
+    if(!gettingConvoDocument.exists){
+      const detailsToStartConversationToSendToFirebase = {
+        userWhoIsLoggedInID: user.uid,
+        theOtherUserInConversation: id,  
+        messages: [],
+      };
+      console.log('Lets create that convo!')
+       setDoc(doc(db, 'ConversationsOfUsers', generatedConvoID), detailsToStartConversationToSendToFirebase).then(() => {
+        console.log("Successful")})
+        .catch((error) => {
+        console.log(`Unsuccessful returned error ${error}`)});
 
-
-    getReference.forEach((doc)=>{
-      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id)){
-        console.log('The doc id:', doc.id, ' and its data: ', doc.data())
-        // Creating an array of objects.
-        gettingAllUsersInfo.push({id: doc.id, ...doc.data() })
-      }
-    })
-     setListOfUsers(gettingAllUsersInfo)
-     if (gettingAllUsersInfo.length === 0) {
-      setShowNoMoreUsers(true);
-    } else {
-      setShowNoMoreUsers(false);
     }
+
   }
 
   // Creating a conversation:
-  const creatingConversation=async(nameOfPerson)=>{
-    const getReference=await getDocs(collection(db,'listOfUsers'))
-    let id=null;
-    getReference.forEach((doc)=>{
-      if (doc.data().name===nameOfPerson){
-        id=doc.id
-      }
-    })
+  const generateCombinedId = (userA_id, userB_id) => {
+    const array=[]
+    array.push(userA_id,userB_id)
+    array.sort()
 
-    const getReferenceToMatch= doc(db,'ConversationsOfUsers', `${user.uid}${id}`)
-    const documentOfConvo=await getDoc(getReferenceToMatch);
-    if(!documentOfConvo){
-      const detailsToStartConversationToSendToFirebase={
-        userWhoIsLoggedInID:user.uid,
-        theOtherUserInConversation:id ,
-        messages:[]
-      }
-      await setDoc(doc(db, "ConversationsOfUsers",`${user.uid}${id}`),detailsToStartConversationToSendToFirebase)
-    }
-    
-  }
+    return `${array[0]}:${array[1]}`;
+  };
+  
 
 
   
     const checkingIfUsersAlreadyHaveAConvo=async()=>{
-      console.log('reach this function')
+      console.log('reach this function!!!')
+      const id=getIDOfOtherUser;
+      const generatedConvoID=generateCombinedId(user.uid,id)
 
-      const getReferenceToMatch= doc(db,'ConversationsOfUsers', `${user.uid}${getIDOfOtherUser}`)
-      const documentOfConvo=await getDoc(getReferenceToMatch);
+      const getRefernceToFindConvo=doc(db,'ConversationsOfUsers', generatedConvoID)
+      const gettingConvoDocument=await getDoc(getRefernceToFindConvo)
+
       // console.log('This is the ',documentOfConvo)
-      if (documentOfConvo.exists()){
+      if (gettingConvoDocument.exists){
         console.log('This is getting here TO SHOW THE USERS ALREADY HAVE A CONVO')
         setShowMatchPopup(false)
       }
@@ -367,7 +449,7 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
               title="Send a Message"
               onPress={() => {
                 setShowMatchPopup(false);
-                creatingConversation(matchedUserData.name)
+                creatingConversation()
                 navigation.navigate('Message');
               }}
             />

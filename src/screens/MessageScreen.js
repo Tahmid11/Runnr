@@ -119,7 +119,7 @@ useEffect(() => {
                   </Text>
 
                   {
-                   conversation.messages?(
+                   conversation.messages.length>0?(
                     <Text style={{ color: "gray", fontSize: 14 }}>{conversation.messages[conversation.messages.length - 1].userInput}</Text>
                    ):(<Text style={{ color: "gray", fontSize: 14 }}>Something</Text>)
                   }
