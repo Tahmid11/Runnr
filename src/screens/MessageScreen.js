@@ -1,86 +1,118 @@
 import React, { useEffect, useState } from "react";
 import { Text,View,TouchableOpacity ,Image, StyleSheet, FlatList} from "react-native";
-import { query, onSnapshot,collection,where, getDoc, doc, getDocs } from "firebase/firestore";
+import { query, onSnapshot,collection, getDoc, doc, getDocs , or, where } from "firebase/firestore";
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import callingContext from '../components/callingContext';
 import Conversation from "./ConversationScreen";
+import { useRoute } from "@react-navigation/native"
 
 
 
 const Message=({navigation})=>{
     const {user}=callingContext();
-    const [conversations,setConversations]=useState([])
+
+    // Old attempt didnt work..
+    const route = useRoute()
+    const matchedWithUserPic = route.params?.otherUserPicture
+    const theOtherPersonsName= route.params?.otherUsersName
+    // console.log('Matchedwithuser picture:',matchedWithUserPic)
+    // console.log('the other persons name:', theOtherPersonsName)
+
+
+
+
+
+    // if (convoID){
+    //   console.log('This entering the if statement')
+    //   let userIds=convoID.split(':')
+    //   console.log('user something:', userIds[0], 'user something else', userIds[1])
+    // }
+    // // console.log(matchedWithUser, IDOfOtherUser)
+    // // let generatedID=generateCombinedId(user.id,IDOfOtherUser)
+    // console.log('This is the convo ID', convoID)
+    
     
 
-    useEffect(() => {
-        const fetchConversationsAndPictures = async () => {
-          const q = query(collection(db, "ConversationsOfUsers"), where('userWhoIsLoggedInID', "==", user.uid));
-          const querySnapshot = await getDocs(q);
-          const convoList = [];
-      
-          for (const docu of querySnapshot.docs) {
-            const otherUserId = docu.data().theOtherUserInConversation;
-            const picURL = await gettingTheProfile(otherUserId);
-            const nameOfPerson=await gettingTheOtherPersonsName(otherUserId)
-            const messagesRef = collection(db, "ConversationsOfUsers", docu.id, "messages");
-            const messagesSnapshot = await getDocs(messagesRef);
-            const messages = messagesSnapshot.docs.map((messageDoc) => messageDoc.data());
-        
-            convoList.push({ id: docu.id, picURL, nameOfPerson, messages, ...docu.data() });
-          }
-          
-          setConversations(convoList)
-        };
-      
-        fetchConversationsAndPictures();
-      
-      }, [user.uid]);
+    // Splitting ID to see whos what!
 
-      // Import the required functions from 'firebase/firestore'
-
-// ... other imports and code
-
-useEffect(() => {
-  const fetchConversations = async () => {
-    const userConversationsRef = collection(db, "ConversationsOfUsers");
-    const q = query(userConversationsRef, where("userWhoIsLoggedInID", "==", user.uid));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const conversations = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        conversations.push({ id: doc.id, ...data });
-      });
-      setConversations(conversations);
-    });
-    console.log(conversations)
-
-    return unsubscribe;
-  };
-
-  fetchConversations();
-}, [user]);
 
       
-      const gettingTheProfile = async (idOfUser) => {
-        console.log('Geting the profile pic of the other person', idOfUser)
-        const getProfilePicOfOtherUserInConvo = doc(db, 'listOfUsers', idOfUser);
-        const getDocument = await getDoc(getProfilePicOfOtherUserInConvo);
-        console.log('This is the other persons profile picture', getDocument.data().picURL)
-        return getDocument.data().picURL;
-      };
-      const gettingTheOtherPersonsName = async (idOfUser) => {
-        const getProfilePicOfOtherUserInConvo = doc(db, 'listOfUsers', idOfUser);
-        const getDocument = await getDoc(getProfilePicOfOtherUserInConvo);
-        return getDocument.data().name;
-      };
-      // console.log('this is conversations:',conversations.messages[0].userInput)
+
+
+
+
+
+
+
+  
+
+  // Creating a conversation:
+  // function generateCombinedId(userA_id, userB_id){
+  //   const array=[]
+  //   array.push(userA_id,userB_id)
+  //   array.sort()
+
+  //   return `${array[0]}:${array[1]}`;
+  // };
+
+  // const gettingTheProfile = async (idOfUser) => {
+  //   console.log('Geting the profile pic of the other person', idOfUser)
+  //   const getProfilePicOfOtherUserInConvo = doc(db, 'listOfUsers', idOfUser);
+  //   const getDocument = await getDoc(getProfilePicOfOtherUserInConvo);
+  //   console.log('This is the other persons profile picture', getDocument.data().picURL)
+  //   return getDocument.data().picURL;
+  // };
+
+  //   useEffect(() => {
+  //       const fetchConversationsAndPictures = async () => {
+  //         const q = query(collection(db, "ConversationsOfUsers"), where('_id', "==", generatedID ));
+  //         const querySnapshot = await getDocs(q);
+  //         console.log('This is query snapshot:',querySnapshot)
+  //         const convoList = [];
+      
+  //         for (const docu of querySnapshot.docs) {
+  //           // const otherUserId = IDOfOtherUser
+  //           const picURL = await gettingTheProfile(otherUserId);
+  //           const nameOfPerson=matchedWithUser.name
+  //           convoList.push({ id: docu.id, picURL, nameOfPerson, messages, ...docu.data() });
+  //         }
+  //         setConversations(convoList)
+  //       };
+  //       fetchConversationsAndPictures();
+  //     }, [user.uid]);
+
+
+
+  // New attempt Idea:
+  // 1) Get the current user id and fetch all documents in 'ConversationsOfUsers', where the fields inside of it include 
+  // the current user logged in.
+  // 2) Do two seperate ones for each field.
+  // 3) Get them and remove and duplicates.
+
+  const [conversations,setConversations]=useState([])
+  const conversationOfUsersRef = collection(db, "ConversationOfUsers")
+  const q1=query(conversationOfUsersRef, where ('particip'))
+
+
+
+
+//   const unsubscribe = onSnapshot(q1, (querySnapshot) => {
+//   const conversationList = [];
+//   querySnapshot.forEach((doc) => {
+//     conversationList.push(doc.data());
+//   });
+
+//   setConversations(conversationList)
+// });
+
+
       
       
 
     return (
         <View>
           <Text>Message screen</Text>
-          <FlatList
+           {/* <FlatList
             data={conversations}
             renderItem={({ item: conversation }) => (
               <TouchableOpacity
@@ -117,19 +149,18 @@ useEffect(() => {
                   <Text style={{ color: "black", fontSize: 16 }}>
                     {conversation.nameOfPerson}
                   </Text>
-
                   {
                    conversation.messages.length>0?(
                     <Text style={{ color: "gray", fontSize: 14 }}>{conversation.messages[conversation.messages.length - 1].userInput}</Text>
                    ):(<Text style={{ color: "gray", fontSize: 14 }}>Something</Text>)
                   }
-                  {/* <Text>{conversation.messages}</Text> */}
+                  <Text>{conversation.messages}</Text>
                   
                 </View>
               </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id}
-          />
+             keyExtractor={(item) => item.id}
+           />  */}
         </View>
       );
 }
