@@ -69,14 +69,17 @@ const Match = ({navigation}) => {
 
   useEffect(()=>{
     const checkingUsersHaveMatchedPreSWipe=async()=>{
+
       const documentLocation=doc(db,'listOfUsers', user.uid)
       const getDocumentOfCurrentUserLoggedIn=await getDoc(documentLocation)
       const getReference=await getDocs(collection(db,'listOfUsers'))
+      
 
       getReference.forEach((doc)=>{
         if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
           if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
             setShowMatchPopup(true)
+
             setMatchedUserData(doc.data())
             setIDOfOtherUser(doc.id)
             setImageOfMatchedUser(doc.data().picURL)
@@ -225,6 +228,7 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
       if (gettingConvoDocument.exists()){
         console.log('This is getting here TO SHOW THE USERS ALREADY HAVE A CONVO')
         setShowMatchPopup(false)
+        console.log('This is show match pop up: ',showMatchPopup)
         // return true;
         // setUserAlreadyHasAConvo(true)
       }
@@ -383,7 +387,7 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
                 // setShowMatchPopup(false)
                 creatingConversation(getIDOfOtherUser)
                 // handleSendMessagePress()
-                navigation.navigate('Message', { otherUserPicture:imageOfMatchedUser, otherUsersName:matchedUserData.name })
+                navigation.navigate('Message')
                 setShowMatchPopup(false)
               }}
             />

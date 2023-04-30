@@ -73,8 +73,10 @@ const MessageScreen=()=>{
       <messageStackNav.Screen name='Chats' component={Message}  options={{title:'Chats', headerTitleAlign:'center'}}/>
       <messageStackNav.Screen name='Conversation' component={Conversation} 
      
-    //  options={({ route }) => ({
-    //       title: route.params?.nameOfPerson || "Conversation",})}
+     options={({ route }) => ({
+          title: route.params?.nameOfPerson || "Conversation",
+          picture:route.params?.pictureOfTheOtherPerson
+        })}
           
           />
     </messageStackNav.Navigator>
