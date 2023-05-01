@@ -31,7 +31,7 @@ const Conversation = ({ navigation }) => {
   const [nameOfCurrentUserLoggedIn, setNameOfCurrentUserLoggedIn] = useState();
 
   const [messages, setMessages] = useState([]);
-  const [newMessages,setNewMessages]=useState([])
+
   const [inputText, setInputText] = useState('');
   // let messages;
 
@@ -60,8 +60,6 @@ useEffect(() => {
           setMessages([...getArrayOfMesssages].reverse());
           
         }
-
-        // messages=newMessages.reverse
         });
 
 
@@ -85,11 +83,9 @@ useEffect(() => {
     
     
     
-    if (inputText.trim().length > 0) {
+    if (inputText.length > 0) {
       const message = {
-        id: Date.now(),
         text: inputText,
-        createdAt: new Date().toISOString(),
         user: {
           id: user.uid,
           name: nameOfCurrentUserLoggedIn,
@@ -137,11 +133,11 @@ useEffect(() => {
       <FlatList
         data={messages}
         renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
         inverted
       />
       <View style={styles.inputContainer}>
         <TextInput
+          multiline={true}
           style={styles.input}
           value={inputText}
           onChangeText={setInputText}

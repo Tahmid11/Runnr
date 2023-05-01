@@ -18,6 +18,9 @@ import Login from '../screens/Login';
 import PopupSreen from '../screens/PopupScreen';
 import Conversation from '../screens/ConversationScreen';
 import callingContext from '../components/callingContext';
+import StartActivity from '../screens/StartActivity';
+import FinishScreen from '../screens/FinishScreen';
+
 import { NavigationContainer } from '@react-navigation/native';
 
 
@@ -31,7 +34,8 @@ const bottomTabs = createBottomTabNavigator();
 const EdittingProfile=createNativeStackNavigator();
 const loginStackNav=createNativeStackNavigator();
 const modalScreenPopUpNav=createNativeStackNavigator();
-const messageStackNav=createNativeStackNavigator()
+const messageStackNav=createNativeStackNavigator();
+const activityStackNav=createNativeStackNavigator()
 // Creation of stack navigator for setting and editing profile page.
 const SettingScreen=()=>{
   return(
@@ -83,6 +87,18 @@ const MessageScreen=()=>{
   )
 }
 
+const ActivityScreen=()=>{
+  return(
+    <activityStackNav.Navigator>
+      <activityStackNav.Screen name='ActivityScreen' component={Activity} options={{ headerTitleAlign:'center', headerShown:false}}/>
+      <activityStackNav.Screen name='StartActivity' component={StartActivity}  options={{ headerTitleAlign:'center', headerShown:false}}/>
+      <activityStackNav.Screen name='FinishScreen' component={FinishScreen}  options={{ headerTitleAlign:'center', headerShown:false}}/>
+
+    </activityStackNav.Navigator>
+
+  )
+}
+
 // Bottom tab navigator.
 export default function Navigation() {
   const { width, height } = Dimensions.get("window")
@@ -102,7 +118,7 @@ export default function Navigation() {
           <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false}}/>
           <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ 
             tabBarIcon: () => <Icon name="chat"  size={27} /> ,headerShown:false}} />
-          <bottomTabs.Screen name='Activity' component={Activity}/>
+          <bottomTabs.Screen name='Activity' component={ActivityScreen} options={{title:'Activity'}}/>
           <bottomTabs.Screen name='Setting' options={{title:'Settings',headerShown:false}} component={SettingScreen} />
           </bottomTabs.Navigator>
 

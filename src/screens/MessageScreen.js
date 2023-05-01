@@ -71,8 +71,6 @@ const Message=({navigation})=>{
           if(theListOfConversations){
             theListOfConversations.forEach((conversation)=>{
               if(doc.id===conversation.idOfOtherPerson){
-                console.log()
-                
                 details.push({id:doc.id,idOfConversation:conversation.conversationID,nameOfOtherPerson:doc.data().name, messages:conversation.messages, picture:doc.data().picURL})
 
               }
