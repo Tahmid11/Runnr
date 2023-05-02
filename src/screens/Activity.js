@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, Alert} from 'react-native'
+import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, Alert, FlatList} from 'react-native'
 import { db } from "../Firebase Connectivity/Firebase";
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where } from "firebase/firestore";
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove } from "firebase/firestore";
 import callingContext from '../components/callingContext';
 import DatePicker from 'react-native-modern-datepicker';
+import DatePicker2 from 'react-native-date-picker';
+
 
 import { useNavigation,  CommonActions} from '@react-navigation/native';
 
@@ -19,6 +21,11 @@ const Activity = ({navigation}) => {
     const {user}=callingContext();
     // Modern dateTimePicker (Variables are declared from settings.js).
   const todaysDate = new Date();
+  const outCome=addHours(todaysDate)
+  
+
+
+
   const [calendarOpen,setCalendarOpen]=useState(false)
   const [x,setX]=useState()
   const [y,setY]=useState()
@@ -26,6 +33,12 @@ const Activity = ({navigation}) => {
   const [hasSelectedDate, setHasUserSelectedDate]=useState(false)
   const [gettingTheSelectedDate,setGettingTheSelectedDate]=useState();
   const [timing, setTime] = useState('');
+
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const [userPickedTime,setHasUserPickedTime]=useState(false)
+
+
+ 
 
   
 
@@ -38,32 +51,76 @@ const Activity = ({navigation}) => {
     const seeingCalendar=()=>{
         setCalendarOpen(true)
     }
+    function addHours(date)
+      {
+        const dateGiven=new Date(date.setTime(date.getTime() + 1 *( 60 * 60 * 1000)))
+        return dateGiven;
+      }
 
     const afterSettingDate=(date)=>{
-        setGettingTheSelectedDate(date)
-        setHasUserSelectedDate(true)
-        closeCalendar()
+      // const userSelectedDate=new Date(date);
+      // setGettingTheSelectedDate(userSelectedDate);
+      let newDate1 = date.replace('/','-');
+      let newDate2 = newDate1.replace('/','-');
+    
+
+      
+      setGettingTheSelectedDate(newDate2)
+      setHasUserSelectedDate(true)
+      closeCalendar()
+      console.log('date is ',newDate2);
+      setX(date.split("/")[0].toString());
+      setY(date.split("/")[1].toString());
+      setZ(date.split("/")[2].toString());
     }
-    useEffect(() => {
-      }, [x, y, z]);
+    const closeTimer=()=>{
+      setTimePickerOpen(false);
+  }
+  const seeTimer=()=>{
+      setTimePickerOpen(true)
+  }
 
-    useEffect(()=>{
-            const h=gettingTheSelectedDate;
-            if (h){
-                setX(h.split("/")[0].toString())
-                setY(h.split('/')[1].toString())
-                setZ(h.split('/')[2].toString())
-            }
-        else{
-            console.log('Error')
-        }   
+  const afterSettingTime=(time)=>{
+    setTime(time)
+    setHasUserPickedTime(true)
+    closeTimer()
+    console.log('the time set is', time);
+  }
+  
+ 
 
-    }, [gettingTheSelectedDate])
+  const onScheduleRunSubmit = () => {
+    let selectedDateTime = new Date(gettingTheSelectedDate+"T"+timing);
+    console.log(selectedDateTime)
+    console.log(outCome)
 
-    const checkingTimeIsValid=(userEnteredTime)=>{
-      console.log('This is the type that the calendar time gives back:',typeof userEnteredTime)
-      console.log('This is the length of the time object : ', userEnteredTime.length)
-    }
+
+    if(selectedDateTime < outCome){
+      Alert.alert(
+        "Date Error",
+        "You cannot select a date and time before the current date/time. Please select a date/time in the FUTURE!",
+        [
+          { text: "OK", onPress: () => {
+            
+            return false;
+          
+          } }
+        ],
+      );
+      return false;
+    } 
+      return true;
+
+    // console.log('the selected date year is', selectedDateTime.getFullYear());
+    // console.log('the selected date month is', selectedDateTime.getMonth());
+    // console.log('the selected date date is', selectedDateTime.getDate());
+  }
+    
+    
+    
+      
+  
+
 
     // End of Date Picker stuff
 
@@ -129,6 +186,7 @@ function onPressRadioButton(radioButtonsArray) {
   }
   else{
     setShowSchedule(false)
+
   }
 
 }
@@ -137,26 +195,111 @@ function onPressRadioButton(radioButtonsArray) {
 const[time, settingTheTime]=useState()
 
 
-const createScheduledRuns=async()=>{
-  const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)
-  const detailsToSendToFirebaseAboutScheduledRuns=[
-    {
-      id:user.id,
-      postCodeWhereTheyRan:postCode,
-      durationTheyPlanToRun:time,
-    }
-  ]
-  setDoc(scheduledRunRef, detailsToSendToFirebaseAboutScheduledRuns, {merge:true})
 
+// Scheduled Runs
+const [userHasScheduledRuns, setScheduledRuns]=useState(false)
+const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
 
-    // createScheduledRuns(scheduledRunRef
+// Unique ID
+const generateUniqueID=()=>{
+  let randomValue=Math.floor(Math.random()*1000)
+  let randomValue2=Math.floor(Math.random()*10000)
+  let randomValue3;
+  if (randomValue===randomValue2){
+    randomValue=randomValue-11
   }
 
+  return `${user.uid}${randomValue}${randomValue2}`
+
+}
 
 
+const createScheduledRuns=async()=>{
+  console.log('Comes to this function')
+  const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)
+  const getDocument=await getDoc(scheduledRunRef)
+
+  
+  const detailsToSendToFirebaseAboutScheduledRuns={
+    activity:[{
+      id:generateUniqueID(),
+      postCodeWhereTheyRan:postCode,
+      whenUserDecidesToRun:new Date(gettingTheSelectedDate+"T"+timing),
+      howLongUserRuns:time,
+      completed:false
+    }]
+  }
+
+  if(getDocument.exists()){
+    console.log('enters here')
+    await updateDoc(scheduledRunRef,{activity:arrayUnion(detailsToSendToFirebaseAboutScheduledRuns.activity[0]), merge:true})
+
+  }
+  else{
+    console.log('enters the else')
+    setDoc(scheduledRunRef, detailsToSendToFirebaseAboutScheduledRuns)
+  }
+  }
+
+  useEffect(()=>{
+    const fetchScheduledRuns=async()=>{
+      
+      const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
+      const doesDocExist=await getDoc(scheduledRunRef)
+      const array=[]
+
+      if (doesDocExist.exists()){
+        
+        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+
+          if(doc.data() && !doc.data().completed && doc.id===user.uid){
+            doc.data().activity.forEach(element => {
+              // console.log('This is the id wihtin the doc', element.id)
+              array.push(element)
+            });
+        }
+        setListOfScheduledRuns(array)
+      })
+      setScheduledRuns(true)
+      return unsub;
+      }
+    }
+    fetchScheduledRuns()
+  },[user.uid, listOfScheduledRuns])
 
 
+  const deleteAField=async(id)=>{
+    console.log('Ges to this function')
+      const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
+      const doesDocExist=await getDoc(scheduledRunRef)
+      if (doesDocExist.exists()){
+        console.log('Enters the first if statement.')
+        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+          
+          if(doc.data() && !doc.data().completed){
+            console.log('Comes here', doc.data().activity)
+            console.log('This is the id it receives: ',id)
+            doc.data().activity.forEach(element => {
+              console.log('This is each element, ', element)
+              if(element.id===id){
 
+                console.log('This is entering here: ',element.id)
+                 updateDoc(scheduledRunRef, {
+                  activity: arrayRemove(element),
+                });
+              }
+            
+
+            });
+        }
+
+      })
+      return unsub;
+      } 
+     
+    
+
+  }
 
   
     return(
@@ -185,22 +328,15 @@ const createScheduledRuns=async()=>{
             <View style={{ backgroundColor:'transparent', alignItems:'center', justifyContent:'center', borderRadius:10, width:320, height:500}}>
             <DatePicker 
             isGregorian={true}
-            // mode="calendar"
+            mode="calendar"
             onDateChange={(date)=>{
                 afterSettingDate(date)
-            }}
-            onTimeChange={(selectedTime) =>{
-              setTime(selectedTime)
-              checkingTimeIsValid(selectedTime)
-
-
             }}
                
             minimumDate={`${todaysDate.getFullYear().toString()}-${(todaysDate.getMonth()+1).toString().padStart(2,'0')}-${(todaysDate.getDate()).toString().padStart(2,'0')}`}
             selectorEndingYear={2100}
             current={gettingTheSelectedDate}
             />
-                
             <TouchableOpacity onPress={closeCalendar} style={styles.closeButton}>
                 <View style={styles.closeButtonView}>
                     <Text style={{color:'black',fontSize:20 , alignSelf:'center'}}>Close</Text>
@@ -210,22 +346,72 @@ const createScheduledRuns=async()=>{
             </View>
         
     </Modal>
+
     
-    {hasSelectedDate && timing? (
+    
+    
+    
+    {hasSelectedDate? (
               <Text style={styles.font}>
-                {z + "/" + y + "/" + x} {"\n"}{console.log('This is the timing that the user selected: ',timing)}
+                {z + "/" + y + "/" + x} 
               </Text>
             ) : (
-              <Text style={styles.font}>Select Date And Time</Text>
+              <Text style={styles.font}>Select Date</Text>
             )}
-
-        
         </TouchableOpacity>
+
+
+        {/* Time Picker */}
+
+        <TouchableOpacity
+          style={styles.selectDateButton}
+          onPress={seeTimer}
+        >
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={timePickerOpen}
+          >
+        <View style={styles.overlay}>
+            <View style={{ backgroundColor:'transparent', alignItems:'center', justifyContent:'center', borderRadius:10, width:320, height:500}}>
+            <DatePicker 
+            mode="time"
+            onTimeChange={(time)=>
+              { 
+                afterSettingTime(time)
+              
+              }}
+            minuteInterval={1}
+            />
+        
+          <TouchableOpacity onPress={closeTimer} style={styles.closeButton}>
+              <View style={styles.closeButtonView}>
+                  <Text style={{color:'black',fontSize:20 , alignSelf:'center'}}>Close</Text>
+              </View>
+          </TouchableOpacity>
+          </View>
+          </View>
+
+      </Modal>
+      {userPickedTime? (
+            <Text style={styles.font}>
+              {timing}
+            </Text>
+          ) : (
+            <Text style={styles.font}>Select Time</Text>
+          )}
+      </TouchableOpacity>
+              
+              
+        
+        
+
         
 
           <Button
           title='Schedule Run'
             onPress={()=>{
+              if(onScheduleRunSubmit()){
               Alert.alert(
                 "Alert Title",
                 "Press OK if you are sure you want to schedule your activity.",
@@ -246,7 +432,8 @@ const createScheduledRuns=async()=>{
                       );
                     } else {
                       console.log("OK Pressed")
-                      navigation.navigate('StartActivity')
+                      createScheduledRuns()
+                      // navigation.navigate('StartActivity')
                     }
                     
                   
@@ -254,13 +441,11 @@ const createScheduledRuns=async()=>{
                 ],
                 { cancelable: true }
               );
-              
+              }
 
             }}
           />
     </View>
-    
-
         ):(
           <Button
           title='Start'
@@ -303,9 +488,11 @@ const createScheduledRuns=async()=>{
             ? `Postcode is correct And Your Borough is ${boroughOfUser} `
             : `Postcode is incorrect. Try again. `}
         </Text>
+
+
+
         <View style={{flexDirection:'row',height: 40,margin: 12,borderWidth: 1,padding: 10,width:250 }}>
         <TextInput
-
         placeholder="Enter planned running time in mins"
         keyboardType="numeric"
         maxLength={4}
@@ -323,11 +510,51 @@ const createScheduledRuns=async()=>{
             <Text>You have not selected a time!</Text>
           )
         }
-       
 
-       
-      
-      
+        { userHasScheduledRuns?(
+         <FlatList
+         contentContainerStyle={{ flexGrow: 1 }}
+         data={listOfScheduledRuns}
+   
+         renderItem={({ item }) => {
+          // Converts it from timestamp to normal use.
+          const dateTime=item.whenUserDecidesToRun.toDate();
+           return (
+             <View style={styles.scheduledRunContainer}>
+               <View style={styles.scheduledRunInfo}>
+                 <Text style={styles.scheduledRunText}>Date and Time of Run: { dateTime.toLocaleDateString('')}</Text>
+                 <Text style={styles.scheduledRunText}>Time: {dateTime.toLocaleTimeString('')}</Text>
+                 <Text style={styles.scheduledRunText}>Total Running Time: {item.howLongUserRuns} minutes</Text>
+                 <Text style={styles.scheduledRunText}>Location of Run: {item.postCodeWhereTheyRan} </Text>
+               </View>
+               <View style={styles.scheduledRunButtons}>
+                 <TouchableOpacity
+                   style={styles.startButton}
+                   onPress={() => navigation.navigate('StartActivity')}
+                 >
+                   <Text style={styles.startButtonText}>Start</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity
+                   style={styles.deleteButton}
+                   onPress={() => {
+                    console.log('This is the item.id:',item.id)
+                    deleteAField(item.id)
+
+                   }}
+                 >
+                   <Text style={styles.deleteButtonText}>Delete</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
+           )
+         }}
+         keyExtractor={(item) => item.id}
+       />
+        ):
+        (
+          null
+        )
+        }
       
   </View>
     )
@@ -404,7 +631,53 @@ menu:{
       borderBottomWidth:1,
       
       
+  },
+
+  scheduledRunContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+  },
+  scheduledRunInfo: {
+    // flex: 1,
+    paddingRight: 10,
+  },
+  scheduledRunText: {
+    color: 'red',
+    fontSize: 14,
+  },
+  scheduledRunButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  startButton: {
+    backgroundColor: '#32CD32',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 5,
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  deleteButton: {
+    backgroundColor: '#DC143C',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontSize: 14,
   }
+
 
 })
 
