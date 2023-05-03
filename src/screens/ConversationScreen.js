@@ -61,11 +61,6 @@ useEffect(() => {
           
         }
         });
-
-
-
-
-       
       
       return unsubscribe;
 
@@ -80,9 +75,6 @@ useEffect(() => {
 
 
   const sendMessage = () => {
-    
-    
-    
     if (inputText.length > 0) {
       const message = {
         text: inputText,

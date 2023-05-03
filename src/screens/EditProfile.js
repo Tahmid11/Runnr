@@ -303,7 +303,6 @@ return (
             value={time}
             labelField='label'
             style={styles.menu}
-
         />
   
         <TextInput

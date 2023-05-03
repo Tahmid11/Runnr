@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, Alert, FlatList} from 'react-native'
 import { db } from "../Firebase Connectivity/Firebase";
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove } from "firebase/firestore";
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc } from "firebase/firestore";
 import callingContext from '../components/callingContext';
 import DatePicker from 'react-native-modern-datepicker';
-import DatePicker2 from 'react-native-date-picker';
+import { LogBox } from 'react-native';
 
 
 import { useNavigation,  CommonActions} from '@react-navigation/native';
@@ -36,6 +36,7 @@ const Activity = ({navigation}) => {
 
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [userPickedTime,setHasUserPickedTime]=useState(false)
+  // console.log('this is user id:', user.uid)
 
 
  
@@ -111,11 +112,8 @@ const Activity = ({navigation}) => {
     } 
       return true;
 
-    // console.log('the selected date year is', selectedDateTime.getFullYear());
-    // console.log('the selected date month is', selectedDateTime.getMonth());
-    // console.log('the selected date date is', selectedDateTime.getDate());
   }
-    
+  
     
     
       
@@ -183,6 +181,7 @@ function onPressRadioButton(radioButtonsArray) {
   }
   if(radioButtonOptns[1].id===2 && radioButtonOptns[1].selected===true){
     setShowSchedule(true)
+    
   }
   else{
     setShowSchedule(false)
@@ -192,7 +191,7 @@ function onPressRadioButton(radioButtonsArray) {
 }
 
 // User Selecting How Long They Will Run For vairable
-const[time, settingTheTime]=useState()
+const[runTime, settingTheTime]=useState()
 
 
 
@@ -200,108 +199,106 @@ const[time, settingTheTime]=useState()
 const [userHasScheduledRuns, setScheduledRuns]=useState(false)
 const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
 
-// Unique ID
-const generateUniqueID=()=>{
-  let randomValue=Math.floor(Math.random()*1000)
-  let randomValue2=Math.floor(Math.random()*10000)
-  let randomValue3;
-  if (randomValue===randomValue2){
-    randomValue=randomValue-11
+// Creating a conversation:
+
+
+
+
+
+
+
+// New Way
+useEffect(()=>{
+  updatingSchedule()
+  
+},[user.uid, listOfScheduledRuns])
+
+
+const updatingSchedule=async(timing, postCode,gettingTheSelectedDate,runTime)=>{
+  // console.log('Reaches this function of convo')
+
+  const docRef=doc(db,'ScheduleRuns', user.uid)
+  const getDocOfUser=await getDoc(docRef)
+  if(!getDocOfUser.exists()){
+    
+      const detailsAboutTheRun = {
+        userID:user.uid,
+        activity:[]
+      }
+      await setDoc(doc(db, 'ScheduleRuns', user.uid), detailsAboutTheRun);
+    }    
+    
+    
+    else{
+    // console.log('Enters the else statement.')
+  try{
+  if(timing&&postCode&&gettingTheSelectedDate&&runTime){
+    // console.log('Enters the if statement within the try')
+    const dataToBeSentToFireStore={
+      TimeOfRun:timing,
+      PostCode:postCode,
+      DateOfRun:gettingTheSelectedDate,
+      DurationOfRun:runTime
+    }
+    console.log('Adds stuff here')
+    await updateDoc(docRef,{
+      activity:arrayUnion(dataToBeSentToFireStore),
+    }) 
+    console.log('Finish adding stuff to db')
   }
-
-  return `${user.uid}${randomValue}${randomValue2}`
-
+}
+catch(err){
+  console.log(err)
 }
 
+    }
 
-const createScheduledRuns=async()=>{
-  console.log('Comes to this function')
-  const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)
-  const getDocument=await getDoc(scheduledRunRef)
 
   
-  const detailsToSendToFirebaseAboutScheduledRuns={
-    activity:[{
-      id:generateUniqueID(),
-      postCodeWhereTheyRan:postCode,
-      whenUserDecidesToRun:new Date(gettingTheSelectedDate+"T"+timing),
-      howLongUserRuns:time,
-      completed:false
-    }]
-  }
+      
 
-  if(getDocument.exists()){
-    console.log('enters here')
-    await updateDoc(scheduledRunRef,{activity:arrayUnion(detailsToSendToFirebaseAboutScheduledRuns.activity[0]), merge:true})
 
   }
-  else{
-    console.log('enters the else')
-    setDoc(scheduledRunRef, detailsToSendToFirebaseAboutScheduledRuns)
-  }
-  }
-
   useEffect(()=>{
     const fetchScheduledRuns=async()=>{
       
-      const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
+      const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
       const doesDocExist=await getDoc(scheduledRunRef)
       const array=[]
 
       if (doesDocExist.exists()){
         
+        // console.log('This is does doc exist: ',doesDocExist)
         const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-
-          if(doc.data() && !doc.data().completed && doc.id===user.uid){
+          if(doc.data() && !doc.data().completed && doc.id===user.uid && doc.data().activity && doc.data().activity.length!==0 ){
             doc.data().activity.forEach(element => {
               // console.log('This is the id wihtin the doc', element.id)
               array.push(element)
             });
+
+            setListOfScheduledRuns(array)
+            setScheduledRuns(true)
+            // console.log('Has user scheduled a run: ', userHasScheduledRuns)
         }
-        setListOfScheduledRuns(array)
+        
+        
       })
-      setScheduledRuns(true)
       return unsub;
       }
     }
     fetchScheduledRuns()
-  },[user.uid, listOfScheduledRuns])
+  },[listOfScheduledRuns])
 
-
-  const deleteAField=async(id)=>{
-    console.log('Ges to this function')
-      const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
-      const doesDocExist=await getDoc(scheduledRunRef)
-      if (doesDocExist.exists()){
-        console.log('Enters the first if statement.')
-        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-          
-          if(doc.data() && !doc.data().completed){
-            console.log('Comes here', doc.data().activity)
-            console.log('This is the id it receives: ',id)
-            doc.data().activity.forEach(element => {
-              console.log('This is each element, ', element)
-              if(element.id===id){
-
-                console.log('This is entering here: ',element.id)
-                 updateDoc(scheduledRunRef, {
-                  activity: arrayRemove(element),
-                });
-              }
-            
-
-            });
-        }
-
-      })
-      return unsub;
-      } 
-     
-    
+  const deleteScheduledRun=async(item)=>{
+    const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
+    await updateDoc(scheduledRunRef,{
+      regions: arrayRemove(item)
+  });
+  
 
   }
-
   
+
     return(
       <View>
          <RadioGroup 
@@ -401,13 +398,6 @@ const createScheduledRuns=async()=>{
             <Text style={styles.font}>Select Time</Text>
           )}
       </TouchableOpacity>
-              
-              
-        
-        
-
-        
-
           <Button
           title='Schedule Run'
             onPress={()=>{
@@ -432,7 +422,7 @@ const createScheduledRuns=async()=>{
                       );
                     } else {
                       console.log("OK Pressed")
-                      createScheduledRuns()
+                      updatingSchedule(timing, postCode,gettingTheSelectedDate, runTime)
                       // navigation.navigate('StartActivity')
                     }
                     
@@ -467,13 +457,9 @@ const createScheduledRuns=async()=>{
                 ],
                 { cancelable: true }
               );
-              
-  
             }}
           />
-
         )}
-
         <TextInput
           value={postCode}
           onChangeText={(value) => {
@@ -482,87 +468,92 @@ const createScheduledRuns=async()=>{
           placeholder='Please Enter Your Postcode.'
           style={styles.textInputStyle}
         /> 
-  
         <Text>
           {postCodeOutcome
             ? `Postcode is correct And Your Borough is ${boroughOfUser} `
             : `Postcode is incorrect. Try again. `}
         </Text>
-
-
-
         <View style={{flexDirection:'row',height: 40,margin: 12,borderWidth: 1,padding: 10,width:250 }}>
         <TextInput
-        placeholder="Enter planned running time in mins"
-        keyboardType="numeric"
-        maxLength={4}
-        onChangeText={(val)=>{
+          placeholder="Enter planned running time in mins"
+          keyboardType="numeric"
+          maxLength={4}
+          onChangeText={(val)=>{
           settingTheTime(val)
           setUserHasSelectedTime(true)
         }}
         />
         </View>
 
-        {
-          userSelectedTime?(
-            <Text>Good you have selected a time</Text>
-          ):(
-            <Text>You have not selected a time!</Text>
-          )
-        }
+  { listOfScheduledRuns.length>0 ? (
 
-        { userHasScheduledRuns?(
-         <FlatList
-         contentContainerStyle={{ flexGrow: 1 }}
-         data={listOfScheduledRuns}
-   
-         renderItem={({ item }) => {
-          // Converts it from timestamp to normal use.
-          const dateTime=item.whenUserDecidesToRun.toDate();
-           return (
-             <View style={styles.scheduledRunContainer}>
-               <View style={styles.scheduledRunInfo}>
-                 <Text style={styles.scheduledRunText}>Date and Time of Run: { dateTime.toLocaleDateString('')}</Text>
-                 <Text style={styles.scheduledRunText}>Time: {dateTime.toLocaleTimeString('')}</Text>
-                 <Text style={styles.scheduledRunText}>Total Running Time: {item.howLongUserRuns} minutes</Text>
-                 <Text style={styles.scheduledRunText}>Location of Run: {item.postCodeWhereTheyRan} </Text>
-               </View>
-               <View style={styles.scheduledRunButtons}>
-                 <TouchableOpacity
-                   style={styles.startButton}
-                   onPress={() => navigation.navigate('StartActivity')}
-                 >
-                   <Text style={styles.startButtonText}>Start</Text>
-                 </TouchableOpacity>
-                 <TouchableOpacity
-                   style={styles.deleteButton}
-                   onPress={() => {
-                    console.log('This is the item.id:',item.id)
-                    deleteAField(item.id)
+    <View>
+    <Text>This is true</Text>
+    <FlatList
+    style={{maxHeight: 200}}
+      contentContainerStyle={{ flexGrow: 1 }}
+      data={listOfScheduledRuns}
+      renderItem={({ item }) => (
+        <View style={styles.scheduledRunContainer}>
+            <View>
+              <Text>Date Of Run: {item.DateOfRun}</Text>
+              <Text>Item Of Run: {item.TimeOfRun}</Text>
+              <Text>Run Duration: {item.DurationOfRun} minutes</Text>
+              <Text>Location Of Run: {item.PostCode}</Text>
+              
+            </View>
+            <View style={{ flexDirection: 'row' }}>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() => navigation.navigate('StartActivity')}
+              >
+                <Text style={styles.startButtonText}>Start</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => {
+                  console.log(`This is + ${item.DateOfRun}`)
 
-                   }}
-                 >
-                   <Text style={styles.deleteButtonText}>Delete</Text>
-                 </TouchableOpacity>
-               </View>
-             </View>
-           )
-         }}
-         keyExtractor={(item) => item.id}
-       />
-        ):
-        (
-          null
-        )
-        }
-      
+                  Alert.alert(
+                    "Delete Warning",
+                    `Are you sure you want to delete this scheduled run on ${item.DateOfRun} at ${item.TimeOfRun}`,
+                    [
+                      { text: "OK", 
+                      onPress: ( ) => {
+
+                          
+                          return false;
+
+                        // console.log(item)
+                        
+                      
+                      } }
+                    ],
+                  );
+                  console.log('on press end')
+
+                }}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+
+        </TouchableOpacity>
+      </View>
+    </View>
+  )}
+  keyExtractor={(item, index) => item.DateOfRun + item.TimeOfRun + item.PostCode}
+/>
+
+
+  </View>
+
+) : (
+  null
+)}
   </View>
     )
 };
-    
 export default Activity;
     
-
 
 
 const styles = StyleSheet.create({
@@ -645,7 +636,7 @@ menu:{
     marginBottom: 10,
   },
   scheduledRunInfo: {
-    // flex: 1,
+    flex: 1,
     paddingRight: 10,
   },
   scheduledRunText: {
@@ -676,9 +667,219 @@ menu:{
   deleteButtonText: {
     color: 'white',
     fontSize: 14,
-  }
+  },
+  });
+  
 
 
-})
 
 
+// const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
+      // const doesDocExist=await getDoc(scheduledRunRef)
+      // if (doesDocExist.exists()){
+      //   console.log('Enters the first if statement.')
+      //   const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+          
+      //     if(doc.data() && !doc.data().completed){
+      //       console.log('Comes here', doc.data().activity)
+      //       console.log('This is the id it receives: ',id)
+      //       doc.data().activity.forEach(element => {
+      //         console.log('This is each element, ', element)
+      //         if(element.id===id){
+
+      //           console.log('This is entering here: ',element.id)
+      //            updateDoc(scheduledRunRef, {
+      //             activity: arrayRemove(element),
+      //           });
+      //         }
+            
+
+      //       });
+      //   }
+
+      // })
+      // return unsub;
+      // } 
+ // if (doesDocExist.exists()){
+        
+      //   const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+
+      //     if(doc.data() && !doc.data().completed && doc.id===user.uid){
+      //       doc.data().activity.forEach(element => {
+      //         // console.log('This is the id wihtin the doc', element.id)
+      //         array.push(element)
+      //       });
+      //   }
+      //   setListOfScheduledRuns(array)
+      // })
+      // setScheduledRuns(true)
+      // return unsub;
+      // }
+        // if(getDocument.exists()){
+  //   console.log('enters here')
+  //   await updateDoc(scheduledRunRef,{activity:arrayUnion(detailsToSendToFirebaseAboutScheduledRuns.activity[0]), merge:true})
+
+  // }
+  // else{
+  //   console.log('enters the else')
+  //   setDoc(scheduledRunRef, detailsToSendToFirebaseAboutScheduledRuns)
+  // }
+
+
+    // console.log('the selected date year is', selectedDateTime.getFullYear());
+    // console.log('the selected date month is', selectedDateTime.getMonth());
+    // console.log('the selected date date is', selectedDateTime.getDate());
+
+    // Unique ID
+// const generateUniqueID=()=>{
+//   let randomValue=Math.floor(Math.random()*1000)
+//   let randomValue2=Math.floor(Math.random()*10000)
+//   if (randomValue===randomValue2){
+//     randomValue=randomValue-11
+//   }
+
+//   return `${user.uid}${randomValue}${randomValue2}`
+
+// }
+
+/* 
+        { userHasScheduledRuns?(
+         <FlatList
+         contentContainerStyle={{ flexGrow: 1 }}
+         data={listOfScheduledRuns}
+   
+         renderItem={({ item }) => {
+          console.log('THi is item',item)
+          // Converts it from timestamp to normal use.
+          const dateTime=item.whenUserDecidesToRun.toDate();
+           return (
+            <View style={styles.scheduledRunContainer} key={item.id}>
+               <View style={styles.scheduledRunInfo}>
+                 <Text style={styles.scheduledRunText}>Date and Time of Run: { dateTime.toLocaleDateString('')}</Text>
+                 <Text style={styles.scheduledRunText}>Time: {dateTime.toLocaleTimeString('')}</Text>
+                 <Text style={styles.scheduledRunText}>Total Running Time: {item.howLongUserRuns} minutes</Text>
+                 <Text style={styles.scheduledRunText}>Location of Run: {item.postCodeWhereTheyRan} </Text>
+               </View>
+               <View style={styles.scheduledRunButtons}>
+                 <TouchableOpacity
+                   style={styles.startButton}
+                   onPress={() => navigation.navigate('StartActivity')}
+                 >
+                   <Text style={styles.startButtonText}>Start</Text>
+                 </TouchableOpacity>
+                 <TouchableOpacity
+                   style={styles.deleteButton}
+                   onPress={() => {
+                    console.log('This is the item.id:',item.id)
+                    // console.log(item.docID)
+                    
+                    // deleteAField(item.id)
+                    deleteDocument(item.id)
+
+                   }}
+                 >
+                   <Text style={styles.deleteButtonText}>Delete</Text>
+                 </TouchableOpacity>
+               </View>
+             </View>
+           )
+         }}
+         keyExtractor={(item) => 
+          console.log('This is item.id', item.id)
+        }
+       />
+        ):
+        (
+          null
+        ) */
+        {/* } */}
+        // {
+        //   userSelectedTime?(
+        //     <Text>Good you have selected a time</Text>
+        //   ):(
+        //     <Text>You have not selected a time!</Text>
+        //   )
+        // }
+
+
+
+// const createScheduledRuns=async()=>{
+//   console.log('Comes to this function')
+//   // const scheduledRunRef=doc(db,'ScheduledRuns', generateUniqueID())
+//   // const getDocument=await getDoc(scheduledRunRef)
+//   if(postCodeOutcome&&user&&time){
+//     const docRef=await addDoc(collection(db,'ScheduledRuns'),{
+//       userID:user.uid,
+//       postCodeWhereTheyRan:postCode,
+//       whenUserDecidesToRun:new Date(gettingTheSelectedDate+"T"+timing),
+//       howLongUserRuns:time,
+//       completed:false,
+//       uniqueID:`${user.uid}${new Date()}${Math.floor(Math.random()*10000)}`
+//   })
+  
+
+//   }
+
+  
+ 
+
+
+//   }
+
+  // useEffect(() => {
+  //   let unsub;
+  
+  //   const fetchScheduledRuns = async () => {
+  //     const qFiltered = query(collection(db, 'ScheduledRuns'), where('userID', '==', user.uid));
+  //     unsub = onSnapshot(qFiltered, (querySnapshot) => {
+  //       let scheduledRunsArray = [];
+  //       querySnapshot.forEach((doc) => {
+  //         scheduledRunsArray.push({id: doc.id, ...doc.data() });
+  //       });
+  //       setListOfScheduledRuns(scheduledRunsArray);
+  //       setScheduledRuns(true)
+  //     });
+  //   };
+  
+  //   fetchScheduledRuns();
+  
+  //   return () => {
+  //     if (unsub) {
+  //       unsub();
+  //     }
+  //   };
+  // }, [user.uid]);
+  
+  // const deleteDocument=async(id)=>{
+  //   console.log('Ges to this function')
+  //   const docRef=doc(db,'ScheduledRuns', id)
+  //   await deleteDoc(docRef)
+
+  // }
+
+LogBox.ignoreLogs(['Excessive number of pending callbacks']);
+  // scheduledRunContainer: {
+  //     flexDirection: 'row',
+  //     justifyContent: 'space-between',
+  //     alignItems: 'center',
+  //     backgroundColor: '#f0f0f0',
+  //     padding: 15,
+  //     borderRadius: 5,
+  //     marginBottom: 10,
+  //     borderWidth: 1,
+  //     borderColor: '#d4d4d4',
+  //   },
+  //   startButton: {
+  //     backgroundColor: '#4CAF50',
+  //     padding: 10,
+  //     borderRadius: 5,
+  //   },
+  //   deleteButton: {
+  //     backgroundColor: '#F44336',
+  //     padding: 10,
+  //     borderRadius: 5,
+  //   },
+  //   buttonText: {
+  //     color: 'white',
+  //     fontWeight: 'bold',
+  //   },
