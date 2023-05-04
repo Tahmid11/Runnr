@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, Alert, FlatList} from 'react-native'
 import { db } from "../Firebase Connectivity/Firebase";
@@ -10,18 +11,25 @@ import { LogBox } from 'react-native';
 import { useNavigation,  CommonActions} from '@react-navigation/native';
 
 import RadioGroup from 'react-native-radio-buttons-group';
+import { v4 } from 'uuid';
+import { polyfillWebCrypto } from "expo-standard-web-crypto";
 
 
 
-
-
-
+polyfillWebCrypto();
+// Reference; https://github.com/expo/expo/issues/17270
 const Activity = ({navigation}) => {
   
     const {user}=callingContext();
     // Modern dateTimePicker (Variables are declared from settings.js).
   const todaysDate = new Date();
   const outCome=addHours(todaysDate)
+
+  
+
+
+    // console.log('This is  unique akh' ,v4())
+  
   
 
 
@@ -205,100 +213,94 @@ const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
 
 
 
-
-
-// New Way
-useEffect(()=>{
-  updatingSchedule()
+const addScheduledRun = async (date, time, postcode, duration) => {
+  const dataToBeSentToFireStore = {
+    TimeOfRun: time,
+    PostCode: postcode,
+    DateOfRun: date,
+    DurationOfRun: duration,
+    UniqueID: v4()
+  };
+  const docRef = doc(db, 'ScheduleRuns', user.uid);
+  const doesDocExist = await getDoc(docRef);
   
-},[user.uid, listOfScheduledRuns])
+  if (doesDocExist.exists()) {
+    await updateDoc(docRef, {
+      activity: arrayUnion(dataToBeSentToFireStore),
+    });
+  } else {
+    await setDoc(docRef, {
+      activity: [dataToBeSentToFireStore],
+    });
+  }
 
+  refreshScheduledRuns();
+};
+const refreshScheduledRuns = async () => {
+  try {
+    const scheduledRunRef = doc(db, 'ScheduleRuns', user.uid);
+    const doesDocExist = await getDoc(scheduledRunRef);
+    const array = [];
 
-const updatingSchedule=async(timing, postCode,gettingTheSelectedDate,runTime)=>{
-  // console.log('Reaches this function of convo')
-
-  const docRef=doc(db,'ScheduleRuns', user.uid)
-  const getDocOfUser=await getDoc(docRef)
-  if(!getDocOfUser.exists()){
-    
-      const detailsAboutTheRun = {
-        userID:user.uid,
-        activity:[]
+    if (doesDocExist.exists() && doesDocExist.data().activity.length > 0) {
+      if (doesDocExist.data() && doesDocExist.id === user.uid && doesDocExist.data().activity && doesDocExist.data().activity.length !== 0) {
+        handleLiveUpdate(doesDocExist.data().activity);
       }
-      await setDoc(doc(db, 'ScheduleRuns', user.uid), detailsAboutTheRun);
-    }    
-    
-    
+    }
     else{
-    // console.log('Enters the else statement.')
-  try{
-  if(timing&&postCode&&gettingTheSelectedDate&&runTime){
-    // console.log('Enters the if statement within the try')
-    const dataToBeSentToFireStore={
-      TimeOfRun:timing,
-      PostCode:postCode,
-      DateOfRun:gettingTheSelectedDate,
-      DurationOfRun:runTime
+      handleLiveUpdate([]);
     }
-    console.log('Adds stuff here')
-    await updateDoc(docRef,{
-      activity:arrayUnion(dataToBeSentToFireStore),
-    }) 
-    console.log('Finish adding stuff to db')
+  } catch (error) {
+    console.error(error);
   }
-}
-catch(err){
-  console.log(err)
-}
-
-    }
+};
 
 
+
+  const handleLiveUpdate = (activityArray) => {
+    setListOfScheduledRuns(activityArray);
+    setScheduledRuns(true);
+  };
   
-      
 
 
-  }
-  useEffect(()=>{
-    const fetchScheduledRuns=async()=>{
-      
-      const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
-      const doesDocExist=await getDoc(scheduledRunRef)
-      const array=[]
-
-      if (doesDocExist.exists()){
-        
-        // console.log('This is does doc exist: ',doesDocExist)
-        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-          if(doc.data() && !doc.data().completed && doc.id===user.uid && doc.data().activity && doc.data().activity.length!==0 ){
-            doc.data().activity.forEach(element => {
-              // console.log('This is the id wihtin the doc', element.id)
-              array.push(element)
-            });
-
-            setListOfScheduledRuns(array)
-            setScheduledRuns(true)
-            // console.log('Has user scheduled a run: ', userHasScheduledRuns)
-        }
-        
-        
-      })
-      return unsub;
+  useEffect(() => {
+    async function fetchAndUnsubscribe() {
+      const unsubscribe = await refreshScheduledRuns();
+      return unsubscribe;
+    }
+  
+    const unsubscribePromise = fetchAndUnsubscribe();
+  
+    return () => {
+      if (unsubscribePromise) {
+        // Use the async keyword for the cleanup function
+        (async () => {
+          const unsubscribe = await unsubscribePromise;
+          unsubscribe();
+        })();
       }
+    };
+  }, [user.uid]);
+  
+  const deleteScheduledRun = async (uniqueID) => {
+    const docRef = doc(db, 'ScheduleRuns', user.uid);
+    const doesDocExist = await getDoc(docRef);
+    
+    if (doesDocExist.exists()) {
+      await updateDoc(docRef, {
+        activity: arrayRemove({ ...doesDocExist.data().activity.find(run => run.UniqueID === uniqueID) }),
+      });
     }
-    fetchScheduledRuns()
-  },[listOfScheduledRuns])
-
-  const deleteScheduledRun=async(item)=>{
-    const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
-    await updateDoc(scheduledRunRef,{
-      regions: arrayRemove(item)
-  });
+    // if (doesDocExist.exists() && doesDocExist.data().activity.length===0){
+    //   setScheduledRuns(false)
+    // }
   
-
-  }
+    refreshScheduledRuns();
+  };
   
-
+  
+  
     return(
       <View>
          <RadioGroup 
@@ -398,7 +400,8 @@ catch(err){
             <Text style={styles.font}>Select Time</Text>
           )}
       </TouchableOpacity>
-          <Button
+
+        <Button
           title='Schedule Run'
             onPress={()=>{
               if(onScheduleRunSubmit()){
@@ -418,11 +421,11 @@ catch(err){
                         'Error',
                         'Please fill in the required fields: Date, Time and Postcode.',
                         [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-                        { cancelable: true }
+                        { cancelable: false }
                       );
                     } else {
                       console.log("OK Pressed")
-                      updatingSchedule(timing, postCode,gettingTheSelectedDate, runTime)
+                      addScheduledRun(gettingTheSelectedDate, timing,postCode, runTime)
                       // navigation.navigate('StartActivity')
                     }
                     
@@ -485,72 +488,29 @@ catch(err){
         />
         </View>
 
-  { listOfScheduledRuns.length>0 ? (
-
-    <View>
-    <Text>This is true</Text>
-    <FlatList
-    style={{maxHeight: 200}}
-      contentContainerStyle={{ flexGrow: 1 }}
-      data={listOfScheduledRuns}
-      renderItem={({ item }) => (
-        <View style={styles.scheduledRunContainer}>
-            <View>
-              <Text>Date Of Run: {item.DateOfRun}</Text>
-              <Text>Item Of Run: {item.TimeOfRun}</Text>
-              <Text>Run Duration: {item.DurationOfRun} minutes</Text>
-              <Text>Location Of Run: {item.PostCode}</Text>
-              
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity
-                style={styles.startButton}
-                onPress={() => navigation.navigate('StartActivity')}
-              >
-                <Text style={styles.startButtonText}>Start</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => {
-                  console.log(`This is + ${item.DateOfRun}`)
-
-                  Alert.alert(
-                    "Delete Warning",
-                    `Are you sure you want to delete this scheduled run on ${item.DateOfRun} at ${item.TimeOfRun}`,
-                    [
-                      { text: "OK", 
-                      onPress: ( ) => {
-
-                          
-                          return false;
-
-                        // console.log(item)
-                        
-                      
-                      } }
-                    ],
-                  );
-                  console.log('on press end')
-
-                }}
-        >
-          <Text style={styles.deleteButtonText}>Delete</Text>
-
-        </TouchableOpacity>
-      </View>
+        {
+  listOfScheduledRuns &&listOfScheduledRuns.length>0 && listOfScheduledRuns.map((run) => (
+    <View key={run.UniqueID} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+      <Text>{run.DateOfRun} - {run.TimeOfRun}</Text>
+      <TouchableOpacity
+        style={{ backgroundColor: '#4CAF50', padding: 5, borderRadius: 5 }}
+        onPress={() => navigation.navigate('StartActivity')}
+      >
+        <Text style={{ color: 'white' }}>Start</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={{ backgroundColor: 'red', padding: 5, borderRadius: 5, marginLeft: 10 }}
+        onPress={() => deleteScheduledRun(run.UniqueID)}
+      >
+        <Text style={{ color: 'white' }}>Delete</Text>
+      </TouchableOpacity>
     </View>
-  )}
-  keyExtractor={(item, index) => item.DateOfRun + item.TimeOfRun + item.PostCode}
-/>
+  ))
+}
 
 
   </View>
-
-) : (
-  null
-)}
-  </View>
-    )
+) 
 };
 export default Activity;
     
@@ -883,3 +843,96 @@ LogBox.ignoreLogs(['Excessive number of pending callbacks']);
   //     color: 'white',
   //     fontWeight: 'bold',
   //   },
+
+
+
+
+
+
+// New WayTHAT WAS WORKING
+// useEffect(()=>{
+//   updatingSchedule()
+  
+// },[user.uid, listOfScheduledRuns])
+
+
+
+// const updatingSchedule=async(timing, postCode,gettingTheSelectedDate,runTime)=>{
+//   // console.log('Reaches this function of convo')
+
+//   const docRef=doc(db,'ScheduleRuns', user.uid)
+//   const getDocOfUser=await getDoc(docRef)
+//   if(!getDocOfUser.exists()){
+    
+//       const detailsAboutTheRun = {
+//         userID:user.uid,
+//         activity:[]
+//       }
+//       await setDoc(doc(db, 'ScheduleRuns', user.uid), detailsAboutTheRun);
+//     }    
+    
+    
+//     else{
+//     // console.log('Enters the else statement.')
+//   try{
+//   if(timing&&postCode&&gettingTheSelectedDate&&runTime){
+//     // console.log('Enters the if statement within the try')
+//     const dataToBeSentToFireStore={
+//       TimeOfRun:timing,
+//       PostCode:postCode,
+//       DateOfRun:gettingTheSelectedDate,
+//       DurationOfRun:runTime,
+//       UniqueID: v4()
+//     }
+//     console.log('Adds stuff here')
+//     await updateDoc(docRef,{
+//       activity:arrayUnion(dataToBeSentToFireStore),
+//     }) 
+    
+//     console.log('Finish adding stuff to db')
+//     setScheduledRuns(true)
+//   }
+  
+// }
+// catch(err){
+//   console.log(err)
+// }
+
+
+//     }
+
+
+  
+
+
+//   }
+  // useEffect(()=>{
+  //   const fetchScheduledRuns=async()=>{
+      
+  //     const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
+  //     const doesDocExist=await getDoc(scheduledRunRef)
+  //     const array=[]
+
+  //     if (doesDocExist.exists()){
+        
+  //       // console.log('This is does doc exist: ',doesDocExist)
+  //       const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+  //         if(doc.data() && !doc.data().completed && doc.id===user.uid && doc.data().activity && doc.data().activity.length!==0 ){
+  //           doc.data().activity.forEach(element => {
+  //             // console.log('This is the id wihtin the doc', element.id)
+  //             array.push(element)
+  //           });
+
+  //           setListOfScheduledRuns(array)
+  //           // console.log('This is the list', listOfScheduledRuns)
+  //           setScheduledRuns(true)
+  //           // console.log('Has user scheduled a run: ', userHasScheduledRuns)
+  //       }
+        
+        
+  //     })
+  //     return unsub;
+  //     }
+  //   }
+  //   fetchScheduledRuns()
+  // },[listOfScheduledRuns])
