@@ -101,7 +101,7 @@ const Activity = ({navigation}) => {
   const onScheduleRunSubmit = () => {
     let selectedDateTime = new Date(gettingTheSelectedDate+"T"+timing);
     console.log(selectedDateTime)
-    console.log(outCome)
+    console.log('This is the out come output:',outCome)
 
 
     if(selectedDateTime < outCome){
@@ -263,40 +263,41 @@ const refreshScheduledRuns = async () => {
   };
   
 
-
   useEffect(() => {
-    async function fetchAndUnsubscribe() {
-      const unsubscribe = await refreshScheduledRuns();
-      return unsubscribe;
-    }
-  
-    const unsubscribePromise = fetchAndUnsubscribe();
-  
+    const unsubscribe = refreshScheduledRuns();
+    
     return () => {
-      if (unsubscribePromise) {
-        // Use the async keyword for the cleanup function
-        (async () => {
-          const unsubscribe = await unsubscribePromise;
-          unsubscribe();
-        })();
-      }
+      unsubscribe();
     };
   }, [user.uid]);
   
-  const deleteScheduledRun = async (uniqueID) => {
-    const docRef = doc(db, 'ScheduleRuns', user.uid);
-    const doesDocExist = await getDoc(docRef);
-    
-    if (doesDocExist.exists()) {
-      await updateDoc(docRef, {
-        activity: arrayRemove({ ...doesDocExist.data().activity.find(run => run.UniqueID === uniqueID) }),
-      });
-    }
-    // if (doesDocExist.exists() && doesDocExist.data().activity.length===0){
-    //   setScheduledRuns(false)
-    // }
+  const deleteScheduledRun = (uniqueID) => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete this scheduled run?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => {},
+          style: "cancel"
+        },
+        {
+          text: "OK",
+          onPress: async () => {
+            const docRef = doc(db, 'ScheduleRuns', user.uid);
+            const doesDocExist = await getDoc(docRef);
   
-    refreshScheduledRuns();
+            if (doesDocExist.exists()) {
+              await updateDoc(docRef, {
+                activity: arrayRemove({ ...doesDocExist.data().activity.find(run => run.UniqueID === uniqueID) }),
+              });
+            }
+            refreshScheduledRuns();
+          }
+        }
+      ],
+      { cancelable: true }
+    );
   };
   
   
@@ -500,7 +501,10 @@ const refreshScheduledRuns = async () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={{ backgroundColor: 'red', padding: 5, borderRadius: 5, marginLeft: 10 }}
-        onPress={() => deleteScheduledRun(run.UniqueID)}
+        onPress={async() => {
+          deleteScheduledRun(run.UniqueID)
+        }
+        }
       >
         <Text style={{ color: 'white' }}>Delete</Text>
       </TouchableOpacity>
