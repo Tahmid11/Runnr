@@ -4,9 +4,9 @@ import auth from '@react-native-firebase/auth';
 import callingContext from "../components/callingContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as ImagePicker from 'expo-image-picker';
-import {doc,setDoc,Timestamp} from '@firebase/firestore'
 import { db, storage, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import { ref, uploadBytes } from '@firebase/storage';
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 
 
 
@@ -16,8 +16,88 @@ import { ref, uploadBytes } from '@firebase/storage';
 const Setting=({navigation})=>{
 
     const {setUser, setLoading,user}=callingContext();
+    const [username,setusername]=useState('')
+    const [usersPicture,setUsersPicture]=useState()
+
+
+    const [usersPoints,setUsersPoints]=useState(null)
+    const [otherPeoplesIDs,setOtherPeoplesIDs]=useState([])
+    const [otherPeoplesNamesAndPoints,setOtherPeoplesNamesAndPoints]=useState([])
+
 
     // image picker code
+
+    useEffect(()=>{
+        const displayProfilePictureNameAndPoints=async()=>{
+            const docRef=doc(db,'listOfUsers',user.uid)
+            const getUserDocument=await getDoc(docRef)
+            console.log(getUserDocument.data().name)
+
+        if (getUserDocument.exists()&&getUserDocument.data().name && getUserDocument.data().picURL){
+            setusername(getUserDocument.data().name)
+            setUsersPicture(getUserDocument.data().picURL)
+            if(getUserDocument.data().points ){
+                setUsersPoints(getUserDocument.data().points)
+                console.log('This is users points', usersPoints)
+            }
+        }
+
+
+        }
+        displayProfilePictureNameAndPoints()
+
+    },[user.uid])
+
+    useEffect(()=>{
+
+        const gettingOtherUsersPoints=()=>{
+            const conversationRef = collection(db, "ConversationsOfUsers");
+            const q=query(conversationRef,where('peopleWhoAreMessagingEachOther', 'array-contains', user.uid))
+            
+              const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const listOfOtherUserIDs=[]
+                querySnapshot.forEach((doc) => {
+                  
+                  if(doc.data().peopleWhoAreMessagingEachOther[0]!==user.uid)
+                  {
+                    listOfOtherUserIDs.push(doc.data().peopleWhoAreMessagingEachOther[0])
+                  }
+                  if(doc.data().peopleWhoAreMessagingEachOther[1]!==user.uid){
+                    listOfOtherUserIDs.push(doc.data().peopleWhoAreMessagingEachOther[1])
+                  }
+    
+                });
+                setOtherPeoplesIDs(listOfOtherUserIDs)
+        })
+        }
+
+
+
+        gettingOtherUsersPoints();
+       
+},[otherPeoplesIDs])
+
+useEffect(() => {
+    const getOtherPeoplesPoints = async () => {
+      if (otherPeoplesIDs) {
+        const tempArray = [];
+        for (const ID of otherPeoplesIDs) {
+          const docRef = doc(db, "listOfUsers", ID);
+          const getUserDocument = await getDoc(docRef);
+  
+          if (getUserDocument.data().points) {
+            tempArray.push({
+              name: getUserDocument.data().name,
+              points: getUserDocument.data().points,
+            });
+          }
+        }
+        setOtherPeoplesNamesAndPoints(tempArray);
+      }
+    };
+    getOtherPeoplesPoints();
+  }, [user.uid]);
+  
     
   
   
@@ -26,9 +106,32 @@ const Setting=({navigation})=>{
     return( 
 
         <View style={{flex:1}}>
-        <ScrollView>
+
+
         
-             
+            <Text>{username}</Text>
+            <Image source={{uri:usersPicture}}/>
+        
+
+
+             {
+                usersPoints&&(
+                    
+                    
+                    <Text>{usersPoints}</Text>
+                
+                )
+            } 
+            {
+                otherPeoplesNamesAndPoints && otherPeoplesNamesAndPoints.map((element)=>{
+                    return (<Text>{element.name}: {element.points}</Text>)
+                })
+            }
+
+
+        <View>
+        </View>
+        <ScrollView>
         <Text>Setting Screen</Text>
         <Button
         title="Press me"
@@ -52,6 +155,7 @@ const Setting=({navigation})=>{
         
 
     </ScrollView>
+
         </View>
     );
 

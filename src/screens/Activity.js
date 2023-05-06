@@ -219,7 +219,8 @@ const addScheduledRun = async (date, time, postcode, duration) => {
     PostCode: postcode,
     DateOfRun: date,
     DurationOfRun: duration,
-    UniqueID: v4()
+    UniqueID: v4(),
+    completed:false
   };
   const docRef = doc(db, 'ScheduleRuns', user.uid);
   const doesDocExist = await getDoc(docRef);
@@ -250,10 +251,14 @@ const refreshScheduledRuns = async () => {
     else{
       handleLiveUpdate([]);
     }
+
+    return () => onSnapshot(scheduledRunRef, (doc) => handleLiveUpdate(doc.data().activity));
+
   } catch (error) {
     console.error(error);
   }
 };
+
 
 
 
@@ -264,12 +269,17 @@ const refreshScheduledRuns = async () => {
   
 
   useEffect(() => {
-    const unsubscribe = refreshScheduledRuns();
-    
-    return () => {
-      unsubscribe();
+    const fetchRuns = async () => {
+      const unsubscribe = await refreshScheduledRuns();
+  
+      return () => {
+        unsubscribe();
+      };
     };
+  
+    fetchRuns();
   }, [user.uid]);
+  
   
   const deleteScheduledRun = (uniqueID) => {
     Alert.alert(
@@ -427,7 +437,6 @@ const refreshScheduledRuns = async () => {
                     } else {
                       console.log("OK Pressed")
                       addScheduledRun(gettingTheSelectedDate, timing,postCode, runTime)
-                      // navigation.navigate('StartActivity')
                     }
                     
                   
@@ -495,7 +504,15 @@ const refreshScheduledRuns = async () => {
       <Text>{run.DateOfRun} - {run.TimeOfRun}</Text>
       <TouchableOpacity
         style={{ backgroundColor: '#4CAF50', padding: 5, borderRadius: 5 }}
-        onPress={() => navigation.navigate('StartActivity')}
+        onPress={() =>
+          navigation.navigate("StartActivity", {
+            UniqueID: run.UniqueID,
+            DurationOfRun:run.DurationOfRun,
+            currentDate:new Date().toString(),
+            dateOfOriginalRun: run.DateOfRun,
+            timeOfOriginalRun: run.TimeOfRun,
+            postCode:run.postCode
+          })}
       >
         <Text style={{ color: 'white' }}>Start</Text>
       </TouchableOpacity>

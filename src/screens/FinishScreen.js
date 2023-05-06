@@ -1,15 +1,150 @@
-import React from "react";
+import React,{useState} from "react";
 import { Text, View, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView,  TouchableHighlight,SafeAreaView, Button} from 'react-native'
-
-
+import { useRoute, useTheme } from '@react-navigation/native';
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
+import callingContext from '../components/callingContext';
+import { db } from "../Firebase Connectivity/Firebase";
+import { FieldValue } from "firebase/firestore";
 
 const FinishScreen=({navigation})=>{
+    
+    const {user}=callingContext()
+    const route = useRoute();
+    const totalActivityTime=route.params?.totalActivityTime
+    const UniqueID = route.params?.UniqueID;
+    const DurationOfRun = route.params?.DurationOfRun;
+    const currentDate = route.params?.currentDate;
+    const dateOfOriginalRun= route.params?.originalDateOfRun;
+    const timeOfOriginalRun= route.params?.timeOfOriginalRun;
+    const postCode=route.params?.postCode
+
+
+    const dateTimeRunTookPlace=new Date(currentDate)
+
+
+
+    // Gets it into millisecondss
+    const getTimeZoneOffset = () => {
+        const now = new Date();
+        return now.getTimezoneOffset() * 60 * 1000;
+      };
+
+    //   Will always work since getTimeZoneOffset (UTC vs BST/GMT)
+      const correctlyUpdatedOriginalDateTimeOfRun = new Date(
+        Date.parse(`${dateOfOriginalRun}T${timeOfOriginalRun}`) + getTimeZoneOffset()
+      );
+      
+
+    console.log('This is the current date time obejct', dateTimeRunTookPlace)
+    console.log('This is the original time  in hours which is ', correctlyUpdatedOriginalDateTimeOfRun.getHours(), correctlyUpdatedOriginalDateTimeOfRun.getMinutes())
+
+
+    
+
+    // Write to the listOfUsers collection and add a new field to the document called points, should increment points...
+    // Tell GPT that point is a field that does not exist, is that okay...
+    // Link it back to conversation of other users... to get the them in a leaderboard of some sort.
+    const calculatePoints=async()=>{
+        let points=0
+        if(correctlyUpdatedOriginalDateTimeOfRun===dateTimeRunTookPlace && totalActivityTime===DurationOfRun ){
+            points=100
+        }
+        else if
+        (correctlyUpdatedOriginalDateTimeOfRun.getFullYear()===dateTimeRunTookPlace.getFullYear() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getDate()===dateTimeRunTookPlace.getDate() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getMonth()===dateTimeRunTookPlace.getMonth() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getHours()>dateTimeRunTookPlace.getHours() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getMinutes()>dateTimeRunTookPlace.getMinutes() 
+        && totalActivityTime===DurationOfRun
+        ){
+            points=100
+        }
+        else if(
+            correctlyUpdatedOriginalDateTimeOfRun.getHours()<dateTimeRunTookPlace.getHours() 
+            && correctlyUpdatedOriginalDateTimeOfRun.getMinutes()<dateTimeRunTookPlace.getMinutes() 
+            &&  totalActivityTime===DurationOfRun
+            && correctlyUpdatedOriginalDateTimeOfRun.getFullYear()===dateTimeRunTookPlace.getFullYear() 
+            && correctlyUpdatedOriginalDateTimeOfRun.getDate()===dateTimeRunTookPlace.getDate() 
+            && correctlyUpdatedOriginalDateTimeOfRun.getMonth()===dateTimeRunTookPlace.getMonth() 
+            ){
+            points=50
+        }
+        else if
+        (correctlyUpdatedOriginalDateTimeOfRun.getHours()===dateTimeRunTookPlace.getHours() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getMinutes()===dateTimeRunTookPlace.getMinutes() 
+        && totalActivityTime===DurationOfRun
+        && correctlyUpdatedOriginalDateTimeOfRun.getFullYear()!=dateTimeRunTookPlace.getFullYear() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getDate()!=dateTimeRunTookPlace.getDate() 
+        && correctlyUpdatedOriginalDateTimeOfRun.getMonth()!=dateTimeRunTookPlace.getMonth() 
+        ){
+            points=40
+        }
+        else if((totalActivityTime>=(DurationOfRun/2) && totalActivityTime<DurationOfRun &&correctlyUpdatedOriginalDateTimeOfRun!=dateTimeRunTookPlace )){
+            points=30
+        }
+       
+
+        else if((totalActivityTime<=(DurationOfRun/2)&&correctlyUpdatedOriginalDateTimeOfRun!=dateTimeRunTookPlace )){
+            points=20
+        }
+        return points;
+    }
+
+
+    const updateUsersPoints=async(pointsForUser)=>{
+        const docRef=doc(db,'listOfUsers',user.uid)
+        const getDocument=await getDoc(docRef)
+
+            if(pointsForUser>0 && pointsForUser){
+              await updateDoc(docRef,{
+                points:increment(pointsForUser)
+              })
+
+            }
+            
+    }
+
+    // Updating The Run To Be Completed
+
+    const updatingUserRuns = async () => {
+
+        const docRef = doc(db, 'ScheduleRuns', user.uid);
+        const gettingDocToUpdate = await getDoc(docRef);
+
+        if (gettingDocToUpdate.data().activity) {
+          console.log('Entered here');
+
+        //   Updates every field in the database.
+          const updatedActivity = gettingDocToUpdate.data().activity.map((doc) => {
+            console.log('Entered here into the for');
+            if (doc.UniqueID === UniqueID) {
+              console.log('Into the new if condition');
+              return { ...doc, completed: true };
+            }
+            return doc; 
+          });
+        //   Updates the whole field.
+          await updateDoc(docRef, { activity: updatedActivity });
+        }
+      };
+      
+      
     return(
         <View>
-            <Text>Some medal.</Text>
+            <Text>Some Medal</Text>
+            <Text>{UniqueID}</Text>
+            <Text>Total Activity Time: {totalActivityTime}</Text>
+            <Text>Total tine: {DurationOfRun}</Text>
+            <Text>todays date: {currentDate}</Text>
+            <Text>Date of original run: {dateOfOriginalRun}</Text>
+            <Text>Time of original run: {timeOfOriginalRun}</Text>
             <TouchableOpacity
-                onPress={()=>{
-                    navigation.navigate('ActivityScreen')
+                onPress={async()=>{
+                    const pointsForUser=await calculatePoints()
+                    console.log('Number of points: ',pointsForUser)
+                    await updateUsersPoints(pointsForUser)
+                    await updatingUserRuns()
+                    // .navigate('ActivityScreen')
                 }}
             >
                 <Text>Done</Text>
@@ -18,5 +153,4 @@ const FinishScreen=({navigation})=>{
         </View>
     )
 }
-
 export default FinishScreen;
