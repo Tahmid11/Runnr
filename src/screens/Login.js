@@ -1,10 +1,11 @@
-import React from "react";
+import React, {useEffect} from "react";
 import { Text,View,Button, TouchableOpacity, StyleSheet } from "react-native";
 import callingContext from "../components/callingContext";
 import SplashScreen from "../components/SplashScreen";
+import { useRoute } from '@react-navigation/native';
 
 
-const Login = () => {
+const Login = ({navigation}) => {
   const { onGoogleButtonPress, setLoading,isLoading, user} = callingContext();
 
   
@@ -22,6 +23,39 @@ const Login = () => {
       setLoading(false)
     }
   };
+
+  
+  useEffect(()=>{
+    const checkUserHasSignedUpFully=async()=>{
+      if(user && user.uid){
+        const documentLocation=doc(db,'listOfUsers', user.uid)
+      const getDocument=await getDoc(documentLocation)
+      
+      if (!getDocument.exists()||
+      !getDocument.data().borough ||
+      !getDocument.data().dOB ||
+      !getDocument.data().name ||
+      !getDocument.data().timestamp ||
+      !getDocument.data().weeklyRunningTime){
+        navigation.navigate("CompleteSignUp");
+        }
+        
+      else{
+        navigation.navigate('Match')
+      }
+
+      }
+      
+    }
+   
+    if(user)
+    {
+      checkUserHasSignedUpFully();
+    }
+    
+    
+  },[user])
+
   return (
     <View style={styles.wrap}>
       <Text>{isLoading ?'Loading...' :'This is the login screen.'}</Text>

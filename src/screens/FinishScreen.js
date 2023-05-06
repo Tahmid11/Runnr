@@ -36,14 +36,12 @@ const FinishScreen=({navigation})=>{
       
 
     console.log('This is the current date time obejct', dateTimeRunTookPlace)
-    console.log('This is the original time  in hours which is ', correctlyUpdatedOriginalDateTimeOfRun.getHours(), correctlyUpdatedOriginalDateTimeOfRun.getMinutes())
+    console.log('This is the original time  in hours which is ', correctlyUpdatedOriginalDateTimeOfRun)
 
 
     
 
-    // Write to the listOfUsers collection and add a new field to the document called points, should increment points...
-    // Tell GPT that point is a field that does not exist, is that okay...
-    // Link it back to conversation of other users... to get the them in a leaderboard of some sort.
+  
     const calculatePoints=async()=>{
         let points=0
         if(correctlyUpdatedOriginalDateTimeOfRun===dateTimeRunTookPlace && totalActivityTime===DurationOfRun ){
@@ -106,7 +104,7 @@ const FinishScreen=({navigation})=>{
 
     // Updating The Run To Be Completed
 
-    const updatingUserRuns = async () => {
+    const updatingUserRuns = async (pointsForUser,dateTimeRunTookPlace) => {
 
         const docRef = doc(db, 'ScheduleRuns', user.uid);
         const gettingDocToUpdate = await getDoc(docRef);
@@ -119,7 +117,7 @@ const FinishScreen=({navigation})=>{
             console.log('Entered here into the for');
             if (doc.UniqueID === UniqueID) {
               console.log('Into the new if condition');
-              return { ...doc, completed: true };
+              return { ...doc, completed: true, points:pointsForUser, timeRunWasCompleted:`${dateTimeRunTookPlace.getHours()}: ${dateTimeRunTookPlace.getMinutes()}`,dateRunWasCompleted:`${((dateTimeRunTookPlace.getDate()).toString().padStart(2,'0'))}/${((dateTimeRunTookPlace.getMonth()+1).toString().padStart(2,'0'))}/${dateTimeRunTookPlace.getFullYear()}`, ActualCompletedRunTime:totalActivityTime};
             }
             return doc; 
           });
@@ -135,7 +133,7 @@ const FinishScreen=({navigation})=>{
             <Text>{UniqueID}</Text>
             <Text>Total Activity Time: {totalActivityTime}</Text>
             <Text>Total tine: {DurationOfRun}</Text>
-            <Text>todays date: {currentDate}</Text>
+            <Text>todays date: {dateTimeRunTookPlace.getFullYear()}</Text>
             <Text>Date of original run: {dateOfOriginalRun}</Text>
             <Text>Time of original run: {timeOfOriginalRun}</Text>
             <TouchableOpacity
@@ -143,8 +141,7 @@ const FinishScreen=({navigation})=>{
                     const pointsForUser=await calculatePoints()
                     console.log('Number of points: ',pointsForUser)
                     await updateUsersPoints(pointsForUser)
-                    await updatingUserRuns()
-                    // .navigate('ActivityScreen')
+                    await updatingUserRuns(pointsForUser, dateTimeRunTookPlace)
                 }}
             >
                 <Text>Done</Text>

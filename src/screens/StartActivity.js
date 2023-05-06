@@ -9,7 +9,7 @@ import {
   Button,
   Alert
 } from 'react-native';
-import { useRoute, useTheme } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { Timer } from 'react-native-stopwatch-timer';
 import StopwatchTimer from 'react-native-animated-stopwatch-timer';
 

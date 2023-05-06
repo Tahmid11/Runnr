@@ -6,6 +6,7 @@ import { View,  Dimensions, Keyboard} from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 
 
 // Importing the different screens.
@@ -20,11 +21,14 @@ import Conversation from '../screens/ConversationScreen';
 import callingContext from '../components/callingContext';
 import StartActivity from '../screens/StartActivity';
 import FinishScreen from '../screens/FinishScreen';
+import CompleteSignUp from '../screens/CompleteSignUp';
 
 import { NavigationContainer } from '@react-navigation/native';
 
 
 import Icon from 'react-native-vector-icons/Entypo'
+
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment } from "firebase/firestore";
 
 
 
@@ -57,6 +61,7 @@ const LoginScreen=()=>{
   return(
     <loginStackNav.Navigator>
       <loginStackNav.Screen name='Login' component={Login}/>
+      <loginStackNav.Screen name='CompleteSignUp' component={CompleteSignUp}/>
     </loginStackNav.Navigator>
   )
 }
@@ -101,11 +106,8 @@ const ActivityScreen=()=>{
 
 // Bottom tab navigator.
 export default function Navigation() {
-  const { width, height } = Dimensions.get("window")
-
-
   const { user } = callingContext();
-
+  
 
   return (
     
@@ -128,7 +130,6 @@ export default function Navigation() {
         </View> 
       )} 
       </NavigationContainer>
-      
   )
 };
 

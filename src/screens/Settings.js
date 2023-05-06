@@ -1,5 +1,5 @@
 import React , { useState, useMemo, useEffect} from "react";
-import { Text,Button,View, Platform, ScrollView, Touchable, TouchableOpacity, StyleSheet, Image} from "react-native";
+import { Text,Button,View, Platform, ScrollView, Touchable, TouchableOpacity, StyleSheet, Image,FlatList} from "react-native";
 import auth from '@react-native-firebase/auth';
 import callingContext from "../components/callingContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -24,21 +24,19 @@ const Setting=({navigation})=>{
     const [otherPeoplesIDs,setOtherPeoplesIDs]=useState([])
     const [otherPeoplesNamesAndPoints,setOtherPeoplesNamesAndPoints]=useState([])
 
-
-    // image picker code
+    const [userHasScheduledRuns, setScheduledRuns]=useState(false)
+    const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
 
     useEffect(()=>{
         const displayProfilePictureNameAndPoints=async()=>{
             const docRef=doc(db,'listOfUsers',user.uid)
             const getUserDocument=await getDoc(docRef)
-            console.log(getUserDocument.data().name)
 
         if (getUserDocument.exists()&&getUserDocument.data().name && getUserDocument.data().picURL){
             setusername(getUserDocument.data().name)
             setUsersPicture(getUserDocument.data().picURL)
             if(getUserDocument.data().points ){
                 setUsersPoints(getUserDocument.data().points)
-                console.log('This is users points', usersPoints)
             }
         }
 
@@ -87,6 +85,7 @@ useEffect(() => {
   
           if (getUserDocument.data().points) {
             tempArray.push({
+              id: getUserDocument.id,
               name: getUserDocument.data().name,
               points: getUserDocument.data().points,
             });
@@ -98,6 +97,36 @@ useEffect(() => {
     getOtherPeoplesPoints();
   }, [user.uid]);
   
+  useEffect(()=>{
+    const fetchScheduledRuns=async()=>{
+      
+      const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
+      
+      const doesDocExist=await getDoc(scheduledRunRef)
+      const array=[]
+      
+      if (doesDocExist.exists()){
+        
+        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+
+
+          if(doc.data().activity){
+            doc.data().activity.forEach(element => {
+            if(element.points!==0 && element.points){
+                array.push(element)
+            }    
+            });
+            setListOfScheduledRuns(array)
+        }
+        
+        setScheduledRuns(true)
+      })
+      
+      return unsub;
+      }
+    }
+    fetchScheduledRuns()
+  },[user.uid, listOfScheduledRuns])
     
   
   
@@ -106,29 +135,19 @@ useEffect(() => {
     return( 
 
         <View style={{flex:1}}>
-
-
-        
             <Text>{username}</Text>
             <Image source={{uri:usersPicture}}/>
-        
-
-
              {
                 usersPoints&&(
-                    
-                    
                     <Text>{usersPoints}</Text>
-                
                 )
             } 
             {
                 otherPeoplesNamesAndPoints && otherPeoplesNamesAndPoints.map((element)=>{
-                    return (<Text>{element.name}: {element.points}</Text>)
+
+                    return (<Text key={element.id}>{element.name}: his points are:  {element.points}</Text>)
                 })
             }
-
-
         <View>
         </View>
         <ScrollView>
@@ -156,6 +175,27 @@ useEffect(() => {
 
     </ScrollView>
 
+
+
+    <FlatList
+         contentContainerStyle={{ flexGrow: 1 }}
+         data={listOfScheduledRuns}
+   
+         renderItem={({ item }) => {
+
+           return (
+            <View style={styles.scheduledRunContainer} key={item.UniqueID}>
+               <View style={styles.scheduledRunInfo}>
+               <Text style={styles.scheduledRunText}>Total Running Time: {item.DateOfRun} minutes</Text>
+                 <Text style={styles.scheduledRunText}>Original Planned Runing Time: {item.DurationOfRun} minutes</Text>
+                 {/* <Text style={styles.scheduledRunText}>Completed Running Time: {item.} minutes</Text> */}
+                 <Text style={styles.scheduledRunText}>Date Of When Run Was Completed: {item.dateRunWasCompleted}</Text>
+                 <Text style={styles.scheduledRunText}>Points Achieved: {item.points}</Text>
+               </View>
+             </View>
+           )
+         }}
+       />
         </View>
     );
 
@@ -188,9 +228,32 @@ const styles=StyleSheet.create({
       closeButtonView: {
         paddingHorizontal: 1, // Adjust this value as needed to reduce the horizontal whitespace
         paddingVertical: 1, // Adjust this value as needed to reduce the vertical whitespace
-      }
-
-
+      },
+      scheduledRunContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: '#f0f0f0',
+      padding: 15,
+      borderRadius: 5,
+      marginBottom: 10,
+      borderWidth: 1,
+      borderColor: '#d4d4d4',
+    },
+    startButton: {
+      backgroundColor: '#4CAF50',
+      padding: 10,
+      borderRadius: 5,
+    },
+    deleteButton: {
+      backgroundColor: '#F44336',
+      padding: 10,
+      borderRadius: 5,
+    },
+    buttonText: {
+      color: 'white',
+      fontWeight: 'bold',
+    }
 })
 
 

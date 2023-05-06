@@ -76,7 +76,7 @@ const Match = ({navigation}) => {
       
 
       getReference.forEach((doc)=>{
-        if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
+        if(doc.id!==getDocumentOfCurrentUserLoggedIn.id && doc.data().allUsersSwipedRightOn && getDocumentOfCurrentUserLoggedIn.data() && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn){
           if(doc.data().allUsersSwipedRightOn.includes(getDocumentOfCurrentUserLoggedIn.id) && getDocumentOfCurrentUserLoggedIn.data().allUsersSwipedRightOn.includes(doc.id)){
             setShowMatchPopup(true)
 
@@ -202,7 +202,7 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
 
 
     getReference.forEach((doc)=>{
-      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id)){
+      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id) && doc.borough===getReferenceToUser.borough){
         console.log('The doc id:', doc.id, ' and its data: ', doc.data())
         
         // Creating an array of objects.
@@ -286,7 +286,6 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
       <View style={{position:'absolute', alignItems:'center'}}>
         {showNoMoreUsers?(<Text style={{marginTop: 50, alignContent:'center', color:'blue', left:20, fontSize:30}}>No more users to swipe on</Text>):(
           <View
-          
             atyle={{zIndex: showMatchPopup ? -1 : 1, }}
           >
              
