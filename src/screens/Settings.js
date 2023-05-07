@@ -67,6 +67,7 @@ const Setting=({navigation})=>{
                 });
                 setOtherPeoplesIDs(listOfOtherUserIDs)
         })
+        return unsubscribe;
         }
 
 

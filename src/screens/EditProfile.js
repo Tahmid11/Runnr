@@ -4,7 +4,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepicker';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect} from 'react'
-import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView} from 'react-native'
+import { Alert,Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, KeyboardAvoidingView, Platform} from 'react-native'
 
 import callingContext from '../components/callingContext';
 import {doc,setDoc,serverTimestamp} from 'firebase/firestore'
@@ -13,7 +13,7 @@ import { storage } from '../Firebase Connectivity/Firebase';
 import {ref,uploadBytes, updateMetadata} from 'firebase/storage'
 
 import { useNavigation,  CommonActions} from '@react-navigation/native';
-
+import { FontAwesome } from '@expo/vector-icons'; 
 
 const differentRunningTimes=[
     {
@@ -232,46 +232,63 @@ const EditProfile=()=>{
         console.log('userSelectedTime', userSelectedTime)
         console.log('PhotoURL:', theURLOfPhoto)
         console.log('The name of the guy: ', displayName)
+
+              
         
 
 
-    if (postCodeOutcome&& !young &&userSelectedTime && piczx &&displayName){
+    if (postCodeOutcome&&userSelectedTime && piczx &&displayName){
         console.log('Your here!')
 
-        try{
-          const userDetailsToSendToFirebase={
-            name:displayName,
-            dOB:`${z}/${y}/${x}`,
-            borough:boroughOfUser,
-            weeklyRunningTime:time,
-            timestamp:serverTimestamp(),
-            picURL:piczx,
-            allUsersSwipedOn:[],
-            allUsersSwipedRightOn:[]
-        }
-        console.log('This is the stuff that is being sent to firebase:', userDetailsToSendToFirebase)
+        if (young) {
+          Alert.alert(
+            'Error',
+            'You are too young!',
+            [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
+            { cancelable: false }
+          );
+        } 
+        else {
+          Alert.alert(
+            'Success',
+            'Nice!',
+            [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
+            { cancelable: false })
 
-        await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)
-        
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 1,
-            routes: [
-              { name: 'Setting' },
-            ],
-          })
-        );
-        console.log('Woooo')
-        console.log('SUCCESSFUL!')
-        submissionSuccess()
-      }
-        catch(error){   
-          console.log('This is the error:'.error)
+            try{
+              const userDetailsToSendToFirebase={
+                name:displayName,
+                dOB:`${z}/${y}/${x}`,
+                borough:boroughOfUser,
+                weeklyRunningTime:time,
+                timestamp:serverTimestamp(),
+                picURL:piczx,
+                allUsersSwipedOn:[],
+                allUsersSwipedRightOn:[]
+            }
+            console.log('This is the stuff that is being sent to firebase:', userDetailsToSendToFirebase)
+    
+            await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)
+            
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [
+                  { name: 'Setting' },
+                ],
+              })
+            );
+            console.log('Woooo')
+            console.log('SUCCESSFUL!')
+            submissionSuccess()
+          }
+            catch(error){   
+              console.log('This is the error:'.error)
+            }
         }
+          
     }
-    else{
-        console.log('Wrong.')
-    }
+
   }
 
   const submissionSuccess=()=>{
@@ -285,6 +302,10 @@ const EditProfile=()=>{
   
     
 return (
+    <KeyboardAvoidingView
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    style={{ flex: 1 }}
+  >
     <View style={styles.container}>
       <View style={styles.viewStyle}>
 
@@ -292,7 +313,7 @@ return (
             data={differentRunningTimes}
             mode='default'
             
-            placeholder={userSelectedTime?({time}):('How Many Minutes Do You Run A Week.')
+            placeholder={userSelectedTime?({time}):('Weekly Running Time')
             }
             search={false}
             onChange={(item)=>{
@@ -309,25 +330,31 @@ return (
           value={displayName}
           onChangeText={(value) => {
             setDisplayName(value);
+            
           }}
-          placeholder='Please Enter Your First Name'
+          placeholder='Enter Your First Name'
           style={styles.textInputStyle}
         />
+        <View>
         <TextInput
           value={postCode}
           onChangeText={(value) => {
             setPostCode(value);
           }}
-          placeholder='Please Enter Your Postcode.'
+          placeholder='Please Enter Your Postcode'
           style={styles.textInputStyle}
         />
       
   
-        <Text>
-          {postCodeOutcome
-            ? `Postcode is correct And Your Borough is ${boroughOfUser} `
-            : `Postcode is incorrect `}
-        </Text>
+        {postCodeOutcome && (
+          <View style={styles.checkmarkContainer}>
+                  <FontAwesome name="check" size={24} color="green" />
+
+          </View>
+        )}
+        </View>
+
+            
   
         <TouchableOpacity
           style={styles.selectDateButton}
@@ -367,36 +394,49 @@ return (
                 {z + "/" + y + "/" + x}
               </Text>
             ) : (
-              <Text style={styles.font}>Select Date </Text>
+              <Text style={styles.font}>Select DOB </Text>
             )}
         </TouchableOpacity>
-        {
-              young
-              ?
-              (
-                <Text>You are too young!</Text>
-              ):(
-                <Text>Nice!</Text>
-              )
-          }
+
+        
         
       </View>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <TouchableOpacity onPress={handleSelectProfilePhoto} style={{height:50}}>
-                
-                <Text>Pick an Image</Text>
-            </TouchableOpacity>
-        <Image style={{height:90, width:200}}source={{uri:photoUrl}}/>
-
-
+      <View style={{ position: 'absolute', top: 20}}>
+      <TouchableOpacity 
+        onPress={handleSelectProfilePhoto} 
+        style={styles.circularButton}
+      >
+        <View style={styles.imageContainer}>
+          {photoUrl ? (
+            <Image style={styles.image} source={{uri:photoUrl}} />
+          ) : (
+            <Text style={styles.buttonText}>Pick an Image</Text>
+          )}
         </View>
-        <TouchableOpacity style={{justifyContent:'center',bottom:30,borderWidth:1,left:0, borderRadius: 10}} 
-        onPress={handleEditProfileSubmission}
+      </TouchableOpacity>
+    </View>
+
+
+    <TouchableOpacity 
+          style={{
+            backgroundColor: '#FF5A5F',
+            borderRadius: 20,
+            padding: 10,
+            width: '80%',
+            alignSelf: 'center',
+            marginTop: 20
+          }} 
+          onPress={handleEditProfileSubmission}
         >
-            <Text style={{textAlign:'center', color:'red'}}>Submit</Text>
+          <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Submit</Text>
         </TouchableOpacity>
 
-    </View>
+  
+  </View>
+ 
+
+    
+    </KeyboardAvoidingView>
   );
 
 }
@@ -405,6 +445,7 @@ export default EditProfile;
 
 const styles = StyleSheet.create({
         container: {
+          backgroundColor: 'white',
           flex: 1,
           alignItems: "center",
           justifyContent: "center"
@@ -423,24 +464,64 @@ const styles = StyleSheet.create({
           fontSize: 30,
           marginBottom: 30,
         },
-    textInputStyle:{
-        height: 40,
-        margin: 12,
-        borderWidth: 1,
-        padding: 10,
-        width:215,
-
-      
+        textInputStyle: {
+          backgroundColor: '#fff',
+          borderColor: '#ddd',
+          borderWidth: 1,
+          borderRadius: 10,
+          paddingLeft: 10,
+          marginBottom: 10,
+          height: 40,
+        },
+        checkmarkContainer: {
+          position: 'absolute',
+          top: 7,
+          right: 10,
+        },
+    circularButton: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      borderWidth: 1,
+      borderColor: 'black',
+      marginBottom: 20,
+    },
+    imageContainer: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 110,
+      height: 110,
+      borderRadius: 55,
+      backgroundColor: '#ccc',
+      overflow: 'hidden',
+    },
+    buttonPosition: {
+      position: 'absolute',
+      bottom: -20,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    buttonText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      textAlign: 'center',
     },
     selectDateButton:{
       overflow: 'hidden',
       alignItems:"center",
+      borderColor: '#ddd',
+      borderWidth: 1,
       justifyContent:"flex-end",
       backgroundColor:'white',
       borderRadius:15,
       paddingHorizontal:10,
-      paddingVertical:10
-  
+      paddingVertical:2,
+      shadowOffset: { width: 0, height: 2 }, 
+      height: 40, 
   },
   font:{
       fontSize:20,
@@ -472,4 +553,3 @@ const styles = StyleSheet.create({
         }
   
   })
-
