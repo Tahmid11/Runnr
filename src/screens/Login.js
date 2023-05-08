@@ -3,6 +3,7 @@ import { Text,View,Button, TouchableOpacity, StyleSheet } from "react-native";
 import callingContext from "../components/callingContext";
 import SplashScreen from "../components/SplashScreen";
 import { useRoute } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 
 const Login = ({navigation}) => {
@@ -58,20 +59,22 @@ const Login = ({navigation}) => {
 
   return (
     <View style={styles.wrap}>
-      <Text>{isLoading ?'Loading...' :'This is the login screen.'}</Text>
+      <Text style={{alignItems: 'center'}}><MaterialCommunityIcons name="run" size={300} color="white" /></Text> 
+      <Text style={{color:'white', fontSize:30, fontWeight:'bold'}}>Runnr</Text>
       <TouchableOpacity onPress={handleGoogleSignIn} style={styles.button}>
         <Text style={styles.font}>Google Signin Button</Text>
       </TouchableOpacity>
     </View>
   );
+
 };
 const styles=StyleSheet.create({
   wrap:{
     flex:1,
     alignItems:"center",
-    justifyContent:'flex-end',
-    marginBottom:30
-    
+    justifyContent:'center', 
+    marginBottom:30,
+    backgroundColor:'#346eeb'
   },
   button:{
     overflow: 'hidden',

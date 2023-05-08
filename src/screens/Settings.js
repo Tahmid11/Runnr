@@ -8,7 +8,7 @@ import { db, storage, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import { ref, uploadBytes } from '@firebase/storage';
 import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 
-
+import { AntDesign } from '@expo/vector-icons'; 
 
 
 
@@ -24,22 +24,31 @@ const Setting=({navigation})=>{
     const [otherPeoplesIDs,setOtherPeoplesIDs]=useState([])
     const [otherPeoplesNamesAndPoints,setOtherPeoplesNamesAndPoints]=useState([])
 
+    const [currentUserNameAndPoints,setCurrentUserNameAndPoints]=useState([])
+
     const [userHasScheduledRuns, setScheduledRuns]=useState(false)
     const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
+    const [allUserNamesAndPoints,setAllUserNamesAndPoints]=useState([])
 
     useEffect(()=>{
         const displayProfilePictureNameAndPoints=async()=>{
             const docRef=doc(db,'listOfUsers',user.uid)
-            const getUserDocument=await getDoc(docRef)
+            
+            const unsub=onSnapshot(docRef,(doc)=>{
+                if (doc.exists()&&doc.data().name && doc.data().picURL){
+                    setusername(doc.data().name)
+                    setUsersPicture(doc.data().picURL)
+                    if(doc.data().points ){
+                        setUsersPoints(doc.data().points)
+                        setCurrentUserNameAndPoints({
+                            personName:doc.data().name,
+                            personPoints:doc.data().points
+                        })
+                    }
+                }
 
-        if (getUserDocument.exists()&&getUserDocument.data().name && getUserDocument.data().picURL){
-            setusername(getUserDocument.data().name)
-            setUsersPicture(getUserDocument.data().picURL)
-            if(getUserDocument.data().points ){
-                setUsersPoints(getUserDocument.data().points)
-            }
-        }
-
+            })
+            return unsub;
 
         }
         displayProfilePictureNameAndPoints()
@@ -61,6 +70,7 @@ const Setting=({navigation})=>{
                     listOfOtherUserIDs.push(doc.data().peopleWhoAreMessagingEachOther[0])
                   }
                   if(doc.data().peopleWhoAreMessagingEachOther[1]!==user.uid){
+
                     listOfOtherUserIDs.push(doc.data().peopleWhoAreMessagingEachOther[1])
                   }
     
@@ -70,11 +80,9 @@ const Setting=({navigation})=>{
         return unsubscribe;
         }
 
-
-
         gettingOtherUsersPoints();
        
-},[otherPeoplesIDs])
+},[otherPeoplesIDs, user.uid])
 
 useEffect(() => {
     const getOtherPeoplesPoints = async () => {
@@ -87,16 +95,22 @@ useEffect(() => {
           if (getUserDocument.data().points) {
             tempArray.push({
               id: getUserDocument.id,
-              name: getUserDocument.data().name,
-              points: getUserDocument.data().points,
+              personName: getUserDocument.data().name,
+              personPoints: getUserDocument.data().points,
             });
           }
         }
         setOtherPeoplesNamesAndPoints(tempArray);
+        if (currentUserNameAndPoints){
+            tempArray.push(currentUserNameAndPoints)
+        }
+        setAllUserNamesAndPoints(tempArray.sort((a,b)=>{
+            return b.personPoints-a.personPoints
+        }))
       }
     };
     getOtherPeoplesPoints();
-  }, [user.uid]);
+  }, [user.uid, otherPeoplesIDs, currentUserNameAndPoints]);
   
   useEffect(()=>{
     const fetchScheduledRuns=async()=>{
@@ -128,6 +142,33 @@ useEffect(() => {
     }
     fetchScheduledRuns()
   },[user.uid, listOfScheduledRuns])
+
+
+//   useEffect(()=>{
+//     let array=[]
+//     if(otherPeoplesNamesAndPoints){
+//         otherPeoplesNamesAndPoints.map((element)=>{
+//             array.push({
+//                 personName:element.name,
+//                 personsPoints:element.points
+//             })
+//         })
+        
+        
+//     }
+//     if(username && usersPoints && !array.includes(username)){
+//         array.push({
+//             personName:username,
+//             personsPoints:usersPoints
+//         })
+        
+//     }
+
+    
+    
+
+
+//   },[ usersPoints, user.uid])
     
   
   
@@ -136,67 +177,106 @@ useEffect(() => {
     return( 
 
         <View style={{flex:1}}>
-            <Text>{username}</Text>
-            <Image source={{uri:usersPicture}}/>
-             {
+         
+
+        
+            <View style={{flexDirection:'row'}}>
+
+            <Image source={{uri:usersPicture}} style={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: 110,
+            height: 110,
+            borderRadius: 55,
+            backgroundColor: '#ccc',
+            overflow: 'hidden',
+            paddingLeft:20
+            }}/>
+            <View style={{flexDirection:'column', paddingLeft:10}}>
+            <Text style={{color:'black', textAlign:'center',fontSize:40, fontWeight:'bold'}}>{username}</Text>
+            {
                 usersPoints&&(
-                    <Text>{usersPoints}</Text>
+                    <Text style={{color:'black', textAlign:'center',fontSize:30, fontWeight:'bold'}}> Points: {usersPoints}</Text>
                 )
             } 
-            {
-                otherPeoplesNamesAndPoints && otherPeoplesNamesAndPoints.map((element)=>{
-
-                    return (<Text key={element.id}>{element.name}: his points are:  {element.points}</Text>)
-                })
-            }
+            </View>
+            </View>
+            
+             
+           
         <View>
         </View>
         <ScrollView>
-        <Text>Setting Screen</Text>
-        <Button
-        title="Press me"
-        onPress={()=>{
-            navigation.navigate('edit')
-        }} />
 
-        <Button 
-        title="Logout"
-        onPress={async ()=>{
-            setLoading(true)
-            await auth().signOut()
-            await GoogleSignin.revokeAccess()
-            .then(() => 
-            console.log('User signed out!'),
-            setUser(null))
-            .catch((err)=>{console.log(err)})
-            setLoading(false)
+        <TouchableOpacity onPress={()=>{
+            navigation.navigate('edit')
         }}
-        />
+        style={styles.editProfileButton}
+        
+        >
+            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Edit Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity  onPress={()=>{
+            if(listOfScheduledRuns){
+                {console.log(listOfScheduledRuns)}
+                navigation.navigate('ViewPastRuns', {
+                    
+                    data:{listOfScheduledRuns}
+                })
+            }
+           
+        }}
+        style={styles.previousRuns}
+        >
+            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Previous Runs</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+            onPress={async ()=>{
+                setLoading(true)
+                await auth().signOut()
+                await GoogleSignin.revokeAccess()
+                .then(() => 
+                console.log('User signed out!'),
+                setUser(null))
+                .catch((err)=>{console.log(err)})
+                setLoading(false)
+        }}
+        style={styles.logoutbutton}
+        >
+        <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Logout</Text> 
+        </TouchableOpacity>
+
+
+        
+        <Text style={{color:'black', fontSize:30, alignSelf:'center', paddingTop:10, fontWeight:'bold'}}>LEADERBOARD</Text>
         
 
+        <ScrollView style={{height:110}}>
+        {
+        allUserNamesAndPoints && allUserNamesAndPoints.length > 0 && allUserNamesAndPoints.map((element, index) => {
+            let rank=index
+                return (
+                    <View key={index} style={styles.leaderboardItem}>
+                    
+                        
+                    <Text style={{fontSize: 20,paddingLeft: 10}}>{rank+1}</Text>
+                    <Text style={styles.leaderboardName}>{element.personName}</Text>
+                    <Text style={styles.leaderboardPoints}>Points: {element.personPoints}</Text>
+                    
+                    </View>
+            )
+        }
+        )
+    }
     </ScrollView>
 
 
 
-    <FlatList
-         contentContainerStyle={{ flexGrow: 1 }}
-         data={listOfScheduledRuns}
-   
-         renderItem={({ item }) => {
 
-           return (
-            <View style={styles.scheduledRunContainer} key={item.UniqueID}>
-               <View style={styles.scheduledRunInfo}>
-               <Text style={styles.scheduledRunText}>Total Running Time: {item.DateOfRun} minutes</Text>
-                 <Text style={styles.scheduledRunText}>Original Planned Runing Time: {item.DurationOfRun} minutes</Text>
-                 {/* <Text style={styles.scheduledRunText}>Completed Running Time: {item.} minutes</Text> */}
-                 <Text style={styles.scheduledRunText}>Date Of When Run Was Completed: {item.dateRunWasCompleted}</Text>
-                 <Text style={styles.scheduledRunText}>Points Achieved: {item.points}</Text>
-               </View>
-             </View>
-           )
-         }}
-       />
+    </ScrollView>
+  
         </View>
     );
 
@@ -254,7 +334,64 @@ const styles=StyleSheet.create({
     buttonText: {
       color: 'white',
       fontWeight: 'bold',
-    }
+    },
+    editProfileButton:{
+        
+            backgroundColor: '#346eeb',
+            borderRadius: 20,
+            padding: 10,
+            width: '80%',
+            alignSelf: 'center',
+            marginTop: 10,
+            marginBottom:10
+    },
+    previousRuns:{
+        
+        backgroundColor: '#346eeb',
+        borderRadius: 20,
+        padding: 10,
+        width: '80%',
+        alignSelf: 'center',
+        marginTop: 5,
+        marginBottom:10
+    },
+    logoutbutton:{
+        backgroundColor: '#346eeb',
+        borderRadius: 20,
+        padding: 10,
+        width: '80%',
+        alignSelf: 'center',
+        marginTop: 5,
+        marginBottom:10
+
+    },
+
+
+leaderboardItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+borderRadius: 10,
+    padding: 10,
+        marginBottom: 10,
+    },
+    leaderboardRank: {
+        fontSize: 18,
+        fontWeight: "bold",
+        },
+leaderboardName: {
+    flex: 1,
+    fontSize: 18,
+    textAlign: 'center',
+    fontWeight:'bold'
+},
+leaderboardPoints: {
+    fontSize: 18,
+    fontWeight: "bold",
+    },
+
+
+      
 })
 
 

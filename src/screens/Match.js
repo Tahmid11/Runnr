@@ -16,7 +16,7 @@ import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import Swiper from 'react-native-deck-swiper';
 import callingContext from '../components/callingContext';
 import { useNavigation } from '@react-navigation/native';
-import Message from "./MessageScreen";
+
 
 
 const Match = ({navigation}) => {
@@ -202,7 +202,8 @@ const unsubscribeCurrentUser = onSnapshot(currentUserRef, (currentUserDocSnapsho
 
 
     getReference.forEach((doc)=>{
-      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id) && doc.borough===getReferenceToUser.borough){
+      if (doc.id!==user.uid &&!storeOfUserSwipedOn.includes(doc.id) && doc.data().borough===getReferenceToUser.data().borough 
+      && doc.data().weeklyRunningTime===getReferenceToUser.data().weeklyRunningTime){
         console.log('The doc id:', doc.id, ' and its data: ', doc.data())
         
         // Creating an array of objects.
@@ -282,11 +283,10 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
   
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>React Native Tinder Card</Text>
       <View style={{position:'absolute', alignItems:'center'}}>
         {showNoMoreUsers?(<Text style={{marginTop: 50, alignContent:'center', color:'blue', left:20, fontSize:30}}>No more users to swipe on</Text>):(
           <View
-            atyle={{zIndex: showMatchPopup ? -1 : 1, }}
+            style={{zIndex: showMatchPopup ? -1 : 1, }}
           >
              
           <Swiper
@@ -311,18 +311,28 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
           renderCard={
             (card, index) => {
               return index < listOfUsers.length ? (
+                <View style={{justifyContent: 'center', alignItems: 'center' }}>
                   <View key={index} style={{ 
                     borderRadius: 4,
                     borderWidth: 2,
                     borderColor: "#E8E8E8",
                     backgroundColor: "transparent",
                     height:400,
-                    width:300}}>
+                    width:300,
+                    justifyContent:'center',
+                    alignItems: 'center'
+                    }}>
                     <ImageBackground source={{uri:card.picURL}} style={styles.cardImage}>
-                    </ImageBackground>
-                    <Text style={{textAlign: "center",fontSize: 50,color:'black'}}>
+                    <Text style={{textAlign: "center",fontSize: 50,color:'white', fontWeight: 'bold'}}>
                         {card.name}
                       </Text>
+                      
+                      
+                    </ImageBackground>
+                    <View style={{backgroundColor: 'lightgrey', padding: 10, borderRadius: 10, marginTop: 10, alignItems: 'center'}}>
+                    <Text style={{color:'black', fontSize:17, color:'black'}}>Favourite Location: {card.favouriteLocation}</Text>
+                    </View>
+                  </View>
                   </View>
               ) : null;
             }
@@ -336,60 +346,97 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
         
       </View>
       {showMatchPopup&& matchedUserData && convoCheckingFinished? (
-        <Modal visible={showMatchPopup} animationType="slide" transparent={true}>
+        <Modal visible={showMatchPopup} animationType="slide" transparent={false}>
         <View style={{flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)'
+          backgroundColor: '#3493eb',
           // zIndex: 100, // Add this line
     }}>
           <Text style=
-          {{fontSize: 24,
+          {{fontSize: 47,
             fontWeight: 'bold',
             marginBottom: 20, 
-            color:'blue'
-            }}>It's a match!</Text>
+            color:'white',
+            fontweight: 'bold',
+            letterSpacing: 1.5,
+            }}>It's a MATCH!</Text>
           <Text 
           style={{fontSize: 18,
             textAlign: 'center',
             marginBottom: 20,
-            color:'blue'
+            color:'white',
+            fontweight: 'bold',
+            textTransform: 'uppercase',
+            letterSpacing: 1.5,
+            lineHeight: 24
             }}>
             You and {matchedUserData.name} have both swiped right on each other.
           </Text>
-          <Text style={{font:'red', fontSize:30,fontWeight:'bold'}}>{getIDOfOtherUser}</Text>
-          <View style={{flexDirection:'row' }}>
-          <Image
+          <View style={{flexDirection:'row', justifyContent: 'center' }}>
+            <View style={{flex: 1, alignItems: 'center'}}>
+          <Image 
           source={{ uri: imageOfCurrentUser }}
-          style={{ width: 100, height: 100, borderRadius: 50 }}
+          style={{ width: 100, height: 100, borderRadius: 50, borderColor:'white' , borderWidth:2}}
         />
+        <Text style={{color: '#fff', marginTop: 10}}>You</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center' }}>
         <Image
         source={{ uri: imageOfMatchedUser }}
-        style={{ width: 100, height: 100, borderRadius: 50 }}
+        style={{ width: 100, height: 100, borderRadius: 50, borderColor:'white' , borderWidth:2}}
       />
+      <Text style={{color: '#fff', marginTop: 10}}>{matchedUserData.name}</Text>
       </View>
-        
+      </View>
+      
           <View style=
           {{flexDirection: 'row',
             justifyContent: 'space-around',
-            width: '80%',}}>
-            <Button
-              title="Keep Swiping"
-              onPress={() => 
-                setShowMatchPopup(false)
+            width: '80%',
+            marginTop:20,
+            }}>
+            <TouchableOpacity 
+            style={{
+              color:'white',
+              backgroundColor: 'red',
+              padding: 10,
+              borderRadius: 5,
+              borderWidth: 2,
+              borderColor:'white',
+            }}
+            
+            onPress={() => 
+              setShowMatchPopup(false)
+            }>
+            <Text style={{ color:'white', fontWeight: 'bold', borderColor:'white'}}>
+              Keep Swiping
+              </Text>
+              </TouchableOpacity>
               
-              }
-            />
-            <Button
-              title="Send a Message"
-              onPress={() => {
-                // setShowMatchPopup(false)
-                creatingConversation(getIDOfOtherUser)
-                // handleSendMessagePress()
-                navigation.navigate('Message')
-                setShowMatchPopup(false)
-              }}
-            />
+              
+              
+            
+            <TouchableOpacity
+               style={{
+               color:'white',
+               backgroundColor: '#34eb40',
+               padding: 10,
+               borderRadius: 5,
+               borderWidth: 2,
+               borderColor:'white'
+            }}
+            onPress={() => {
+              // setShowMatchPopup(false)
+              creatingConversation(getIDOfOtherUser)
+              // handleSendMessagePress()
+              navigation.navigate('Message')
+              setShowMatchPopup(false)
+            }}
+            >
+              <Text style={{color:'white', fontWeight:'bold'}}>Send a Message</Text>
+              
+            </TouchableOpacity>
             
           </View>
         </View>
@@ -406,7 +453,166 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
 
   )
 }
-// const checkingIfUsersAlreadyHaveAConvo=async()=>{
+
+export default Match
+const styles = {
+  container: {
+    flex: 1
+  },
+  header: {
+    color: 'red',
+    fontSize: 30,
+    marginBottom: 30,
+    textAlign: 'center', // Added to center the text
+  },
+  // cardContainer: {
+  //   width: '90%',
+  //   maxWidth: 260,
+  //   height: 300,
+  // },
+  card: {
+    position: 'absolute',
+    backgroundColor: '#fff',
+    width: '100%',
+    maxWidth: 260,
+    height: 300,
+    shadowColor: 'black',
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    borderRadius: 20,
+    resizeMode: 'cover',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 20,
+  },
+  cardTitle: {
+    position: 'absolute',
+    bottom: 0,
+    margin: 10,
+    color: '#fff',
+  },
+  buttons: {
+    margin: 20,
+    zIndex: -100,
+  },
+  infoText: {
+    height: 28,
+    justifyContent: 'center',
+    display: 'flex',
+    zIndex: -100,
+  },
+  textInputStyle:{
+      height: 40,
+      margin: 12,
+      borderWidth: 1,
+      padding: 10,
+    
+  },
+  selectDateButton:{
+    overflow: 'hidden',
+    alignItems:"center",
+    justifyContent:"flex-end",
+    backgroundColor:'white',
+    borderRadius:15,
+    paddingHorizontal:10,
+    paddingVertical:10
+
+},
+font:{
+    fontSize:20,
+    fontWeight:"bold",
+    textAlign:"center"
+
+  },
+  closeButton:{
+    backgroundColor:'white',
+    justifyContent:'center',
+    paddingHorizontal:1,
+    paddingVertical:4
+  },
+  closeButtonView: {
+    paddingHorizontal: 1, // Adjust this value as needed to reduce the horizontal whitespace
+    paddingVertical: 1, // Adjust this value as needed to reduce the vertical whitespace
+  },
+  submitButtonContainer:{
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    left: 0,
+    right: 0,
+    bottom: 10,
+  },
+  buttonsContainer: {
+    top:400
+  },
+  
+  swipeLeftButton: {
+    backgroundColor: 'transparent',
+    padding: 10,
+    borderRadius: 5,
+
+  },
+  swipeRightButton: {
+    backgroundColor: 'transparent',
+    padding: 10,
+    borderRadius: 5,
+    position:'absolute',
+    left:300
+  },
+  swipeButtonText: {
+    fontSize: 16,
+  },
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// / const checkingIfUsersAlreadyHaveAConvo=async()=>{
   //     console.log('reach this function!!!')
   //     const id=getIDOfOtherUser;
   //     const generatedConvoID=generateCombinedId(user.uid,id)
@@ -856,122 +1062,6 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
 
 //   )
 // }
-
-export default Match
-const styles = {
-  container: {
-    flex: 1,
-    backgroundColor: "#F5FCFF"
-  },
-  header: {
-    color: '#000',
-    fontSize: 30,
-    marginBottom: 30,
-    textAlign: 'center', // Added to center the text
-  },
-  // cardContainer: {
-  //   width: '90%',
-  //   maxWidth: 260,
-  //   height: 300,
-  // },
-  card: {
-    position: 'absolute',
-    backgroundColor: '#fff',
-    width: '100%',
-    maxWidth: 260,
-    height: 300,
-    shadowColor: 'black',
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    borderRadius: 20,
-    resizeMode: 'cover',
-  },
-  cardImage: {
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-    borderRadius: 20,
-  },
-  cardTitle: {
-    position: 'absolute',
-    bottom: 0,
-    margin: 10,
-    color: '#fff',
-  },
-  buttons: {
-    margin: 20,
-    zIndex: -100,
-  },
-  infoText: {
-    height: 28,
-    justifyContent: 'center',
-    display: 'flex',
-    zIndex: -100,
-  },
-  textInputStyle:{
-      height: 40,
-      margin: 12,
-      borderWidth: 1,
-      padding: 10,
-    
-  },
-  selectDateButton:{
-    overflow: 'hidden',
-    alignItems:"center",
-    justifyContent:"flex-end",
-    backgroundColor:'white',
-    borderRadius:15,
-    paddingHorizontal:10,
-    paddingVertical:10
-
-},
-font:{
-    fontSize:20,
-    fontWeight:"bold",
-    textAlign:"center"
-
-  },
-  closeButton:{
-    backgroundColor:'white',
-    justifyContent:'center',
-    paddingHorizontal:1,
-    paddingVertical:4
-  },
-  closeButtonView: {
-    paddingHorizontal: 1, // Adjust this value as needed to reduce the horizontal whitespace
-    paddingVertical: 1, // Adjust this value as needed to reduce the vertical whitespace
-  },
-  submitButtonContainer:{
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    left: 0,
-    right: 0,
-    bottom: 10,
-  },
-  buttonsContainer: {
-    top:400
-  },
-  
-  swipeLeftButton: {
-    backgroundColor: 'transparent',
-    padding: 10,
-    borderRadius: 5,
-
-  },
-  swipeRightButton: {
-    backgroundColor: 'transparent',
-    padding: 10,
-    borderRadius: 5,
-    position:'absolute',
-    left:300
-  },
-  swipeButtonText: {
-    fontSize: 16,
-  },
-
-}
-
 
   // const getUpdatedListOfUsers = async () => {
   //   const gettingDocsFromUserCollection = collection(db, "listOfUsers");

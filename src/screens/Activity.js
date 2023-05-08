@@ -6,6 +6,7 @@ import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, s
 import callingContext from '../components/callingContext';
 import DatePicker from 'react-native-modern-datepicker';
 import { LogBox } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons'; 
 
 
 import { useNavigation,  CommonActions} from '@react-navigation/native';
@@ -101,10 +102,13 @@ const Activity = ({navigation}) => {
   const onScheduleRunSubmit = () => {
     let selectedDateTime = new Date(gettingTheSelectedDate+"T"+timing);
     console.log(selectedDateTime)
+
     console.log('This is the out come output:',outCome)
+    console.log('Which radio button:', whichRadioButton);
+  
 
 
-    if(selectedDateTime < outCome){
+     if(selectedDateTime < outCome){
       Alert.alert(
         "Date Error",
         "You cannot select a date and time before the current date/time. Please select a date/time in the FUTURE!",
@@ -118,8 +122,20 @@ const Activity = ({navigation}) => {
       );
       return false;
     } 
+    else if (!gettingTheSelectedDate|| !postCodeOutcome || !timing || !runTime || Number(runTime) ===0 || whichRadioButton !== 2) {
+      Alert.alert(
+        'Error',
+        'Please check the following fields: Date, Time, Postcode, and Minutes.',
+        [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
+        { cancelable: false }
+      );
+      return false;
+    }
+    else{
       return true;
-
+    }
+      
+    
   }
   
     
@@ -182,6 +198,8 @@ const [radioButtonOptns,setRadioButtonOptions]=useState([{
 
 }])
 
+const [whichRadioButton, setWhichRadioButton]=useState(null)
+
 function onPressRadioButton(radioButtonsArray) {
   setRadioButtonOptions(radioButtonsArray);
   if(radioButtonOptns){
@@ -189,10 +207,13 @@ function onPressRadioButton(radioButtonsArray) {
   }
   if(radioButtonOptns[1].id===2 && radioButtonOptns[1].selected===true){
     setShowSchedule(true)
+    setWhichRadioButton(radioButtonOptns[1].id)
     
   }
   else{
     setShowSchedule(false)
+    setWhichRadioButton(radioButtonOptns[0].id)
+    
 
   }
 
@@ -214,6 +235,7 @@ const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
 
 
 const addScheduledRun = async (date, time, postcode, duration) => {
+  console.log('here at asdd scheduled run...')
   const dataToBeSentToFireStore = {
     TimeOfRun: time,
     PostCode: postcode,
@@ -229,7 +251,9 @@ const addScheduledRun = async (date, time, postcode, duration) => {
     await updateDoc(docRef, {
       activity: arrayUnion(dataToBeSentToFireStore),
     });
-  } else {
+  } 
+  else {
+    console.log('Enters the else...')
     await setDoc(docRef, {
       activity: [dataToBeSentToFireStore],
     });
@@ -311,23 +335,37 @@ const refreshScheduledRuns = async () => {
   };
   
   
-  
+  const reformatDate2 = (date) => {
+    const dateParts = date.split('-');
+    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  };
     return(
       <View>
+        
          <RadioGroup 
             radioButtons={radioButtonOptns} 
             onPress={
               onPressRadioButton
             } 
+            flexDirection='row'
+            justifyContent='row-around'
         />
-        { showSchedule?  (
-          <View>
+        
+        { showSchedule&& (
+          
+          
+          <View style={{alignItems:'center'}}>
 
         
-        <TouchableOpacity
-          style={styles.selectDateButton}
-          onPress={seeingCalendar}
-        >
+<TouchableOpacity
+  style={styles.selectDateButton}
+  onPress={() => {
+    seeingCalendar();
+  }}
+>
+
+
+
 
       <Modal
         animationType="slide"
@@ -374,7 +412,7 @@ const refreshScheduledRuns = async () => {
         {/* Time Picker */}
 
         <TouchableOpacity
-          style={styles.selectDateButton}
+          style={styles.selectTimeButton}
           onPress={seeTimer}
         >
         <Modal
@@ -412,127 +450,204 @@ const refreshScheduledRuns = async () => {
           )}
       </TouchableOpacity>
 
-        <Button
-          title='Schedule Run'
-            onPress={()=>{
-              if(onScheduleRunSubmit()){
-              Alert.alert(
-                "Alert Title",
-                "Press OK if you are sure you want to schedule your activity.",
-                [
-                  {
-                    text: "Cancel",
-                    onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
-                  },
-                  { text: "OK", onPress: () => {
-                    if (!x || !y || !z || !postCodeOutcome || !timing) {
-                      // Show alert for missing date, time or invalid postcode
-                      Alert.alert(
-                        'Error',
-                        'Please fill in the required fields: Date, Time and Postcode.',
-                        [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-                        { cancelable: false }
-                      );
-                    } else {
-                      console.log("OK Pressed")
-                      addScheduledRun(gettingTheSelectedDate, timing,postCode, runTime)
-                    }
-                    
-                  
-                  } }
-                ],
-                { cancelable: true }
-              );
-              }
-
-            }}
-          />
+        
     </View>
-        ):(
-          <Button
-          title='Start'
-            onPress={()=>{
-              Alert.alert(
-                "Alert Title",
-                "Press OK if you are sure you want to start your activity.",
-                [
-                  {
-                    text: "Cancel",
-                    onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
-                  },
-                  { text: "OK", onPress: () => {
-                    console.log("OK Pressed")
-                    navigation.navigate('StartActivity')
-                  
-                  } }
-                ],
-                { cancelable: true }
-              );
-            }}
-          />
-        )}
+      )}
+
+        <View style={{alignItems:'center'}}>
+          <View style={styles.inputWithTick}>
         <TextInput
           value={postCode}
           onChangeText={(value) => {
             setPostCode(value);
           }}
-          placeholder='Please Enter Your Postcode.'
+          placeholder='Enter postcode of run location'
           style={styles.textInputStyle}
-        /> 
-        <Text>
-          {postCodeOutcome
-            ? `Postcode is correct And Your Borough is ${boroughOfUser} `
-            : `Postcode is incorrect. Try again. `}
-        </Text>
-        <View style={{flexDirection:'row',height: 40,margin: 12,borderWidth: 1,padding: 10,width:250 }}>
+        />
+        {postCodeOutcome && (
+          <View style={styles.checkmarkContainer}>
+                  <FontAwesome name="check" size={24} color="green" />
+
+          </View>
+        )}
+        </View>
+        
+
+        <View style={styles.textInputStyle}>
         <TextInput
-          placeholder="Enter planned running time in mins"
+          placeholder="Run Time In Minutes"
           keyboardType="numeric"
-          maxLength={4}
+          maxLength={2}
           onChangeText={(val)=>{
-          settingTheTime(val)
-          setUserHasSelectedTime(true)
+            settingTheTime(val)
+            setUserHasSelectedTime(true)
         }}
         />
         </View>
+        </View>
 
+        {showSchedule?(
+
+          <TouchableOpacity
+            style={styles.startScheduleButton}
+            onPress={()=>{
+              if(onScheduleRunSubmit()){
+                Alert.alert(
+                  "Schedule Run Warning",
+                  "Press OK if you are sure you want to schedule your activity.",
+                  [
+                    {
+                      text: "Cancel",
+                      onPress: () => console.log("Cancel Pressed"),
+                      style: "cancel"
+                    },
+                    { text: "OK", onPress: () => {
+                        console.log("OK Pressed")
+                        addScheduledRun(gettingTheSelectedDate, timing,postCode, runTime)
+                    
+                    } }
+                  ]
+                );
+                }
+
+            }}
+          >
+            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Schedule Run</Text>
+          </TouchableOpacity>
+        ):(
+          <TouchableOpacity
+            style={styles.startScheduleButton}
+            onPress={()=>{
+              if(!postCodeOutcome || !runTime || whichRadioButton===null || whichRadioButton!==radioButtonOptns[0].id || (Number(runTime)===0)){
+                Alert.alert(
+                  'Error',
+                  'Please type in correct postcode, or minutes>0 or select the correct radio button of your choice.',[{
+                    text:'OK', onPress:()=>{console.log('Ok')}
+                  }]
+                )
+
+              }else{
+                Alert.alert(
+                  "Alert Title",
+                  "Press OK if you are sure you want to start your activity.",
+                  [
+                    {
+                      text: "Cancel",
+                      onPress: () => console.log("Cancel Pressed"),
+                      style: "cancel"
+                    },
+                    { text: "OK", onPress: () => {
+                      
+                        
+                      {
+                        console.log("OK Pressed")
+                        navigation.navigate('StartActivity',{
+                          DurationOfRun:runTime ,
+                          currentDate: new Date().toString(),
+                          postCode: postCode
+                        })
+  
+                      }
+                     
+                    
+                    } }
+                  ],
+                  { cancelable: true }
+                )
+
+              }
+             
+            }}
+          >
+            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Start</Text>
+
+
+          </TouchableOpacity>
+          
+        )}
+
+
+<ScrollView style={{height:200}}>
         {
-  listOfScheduledRuns &&listOfScheduledRuns.length>0 && listOfScheduledRuns.map((run) => (
-    <View key={run.UniqueID} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-      <Text>{run.DateOfRun} - {run.TimeOfRun}</Text>
-      <TouchableOpacity
-        style={{ backgroundColor: '#4CAF50', padding: 5, borderRadius: 5 }}
-        onPress={() =>
-          navigation.navigate("StartActivity", {
-            UniqueID: run.UniqueID,
-            DurationOfRun:run.DurationOfRun,
-            currentDate:new Date().toString(),
-            dateOfOriginalRun: run.DateOfRun,
-            timeOfOriginalRun: run.TimeOfRun,
-            postCode:run.postCode
-          })}
-      >
-        <Text style={{ color: 'white' }}>Start</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={{ backgroundColor: 'red', padding: 5, borderRadius: 5, marginLeft: 10 }}
-        onPress={async() => {
-          deleteScheduledRun(run.UniqueID)
-        }
-        }
-      >
-        <Text style={{ color: 'white' }}>Delete</Text>
-      </TouchableOpacity>
-    </View>
-  ))
+  listOfScheduledRuns &&listOfScheduledRuns.length>0 && listOfScheduledRuns.map((run) => {
+    
+    {
+      if (run.completed === false) {
+       let dateofUserScheduledRun=reformatDate2(run.DateOfRun)
+       console.log(dateofUserScheduledRun)
+        return (
+          
+          <View
+            key={run.UniqueID}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 10,
+              backgroundColor: 'white',
+              borderRadius: 10,
+              padding: 10,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1,
+              elevation: 2,
+            }}
+          >
+            <Text style={{ fontSize: 18 }}>
+              {dateofUserScheduledRun} - {run.TimeOfRun}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#4CAF50',
+                padding: 10,
+                borderRadius: 10,
+                marginLeft: 10,
+              }}
+              onPress={() =>{
+                console.log('Comes here')
+                navigation.navigate('StartActivity', {
+                  UniqueID: run.UniqueID,
+                  DurationOfRun: run.DurationOfRun,
+                  currentDate: new Date().toString(),
+                  dateOfOriginalRun: run.DateOfRun,
+                  timeOfOriginalRun: run.TimeOfRun,
+                  postCode: run.postCode
+                })
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 18 }}>Start</Text>
+            </TouchableOpacity>
+
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: 'red',
+                padding: 10,
+                borderRadius: 10,
+                marginLeft: 10,
+              }}
+              onPress={async () => {
+                deleteScheduledRun(run.UniqueID);
+              }}
+            >
+              <Text style={{ color: 'white', fontSize: 18 }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+  )}
+      
+
+     } 
+    
+    
+})
 }
+</ScrollView>
 
 
   </View>
-) 
-};
+    )} 
+;
 export default Activity;
     
 
@@ -557,29 +672,45 @@ const styles = StyleSheet.create({
     fontSize: 30,
     marginBottom: 30,
   },
-textInputStyle:{
-  height: 40,
-  margin: 12,
-  borderWidth: 1,
-  padding: 10,
-  width:215,
+  selectDateButton:{
 
+    overflow: 'hidden',
+
+    borderColor: '#ddd',
+    borderWidth: 1,
+
+    backgroundColor:'white',
+    borderRadius:15,
+    paddingHorizontal:10,
+    paddingVertical:2,
+    shadowOffset: { width: 0, height: 2 }, 
+    height: 40, 
+    width:250,
+    justifyContent:'center',
+    marginTop:10
 
 },
-selectDateButton:{
-overflow: 'hidden',
-alignItems:"center",
-justifyContent:"flex-end",
-backgroundColor:'white',
-borderRadius:15,
-paddingHorizontal:10,
-paddingVertical:10
+selectTimeButton:{
+  overflow: 'hidden',
 
+  borderColor: '#ddd',
+  borderWidth: 1,
+
+  backgroundColor:'white',
+  borderRadius:15,
+  paddingHorizontal:10,
+  paddingVertical:2,
+  shadowOffset: { width: 0, height: 2 }, 
+  height: 40, 
+  width:250,
+  justifyContent:'center',
+  marginBottom:10,
+  marginTop:10
 },
 font:{
-fontSize:20,
+fontSize:18,
 fontWeight:"bold",
-textAlign:"center"
+textAlign:"center",
 
 },
 closeButton:{
@@ -649,9 +780,49 @@ menu:{
     color: 'white',
     fontSize: 14,
   },
+  textInputStyle: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingLeft: 10,
+    marginBottom: 10,
+    height: 40,
+    width:250,
+    justifyContent:'center',
+    alignContent:'center',
+    marginTop:8
+  },
+  inputWithTick:{
+    flexDirection: 'row',
+    position: 'relative',
+  },
+  checkmarkContainer: {
+    position: 'absolute',
+    right: 10,
+    top: 14,
+  },
+
+  startScheduleButton:{
+        
+    backgroundColor: '#346eeb',
+    borderRadius: 20,
+    padding: 10,
+    width: '70%',
+    alignSelf: 'center',
+    marginTop: 5,
+    marginBottom:10
+},
   });
   
 
+
+
+
+
+
+
+  
 
 
 

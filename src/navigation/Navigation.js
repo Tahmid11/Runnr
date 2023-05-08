@@ -16,19 +16,21 @@ import EditProfile from '../screens/EditProfile';
 import Message from '../screens/MessageScreen';
 import Activity from '../screens/Activity';
 import Login from '../screens/Login';
-import PopupSreen from '../screens/PopupScreen';
+import ViewPastRuns from '../screens/ViewPastRuns';
 import Conversation from '../screens/ConversationScreen';
 import callingContext from '../components/callingContext';
 import StartActivity from '../screens/StartActivity';
 import FinishScreen from '../screens/FinishScreen';
-import CompleteSignUp from '../screens/CompleteSignUp';
+
 
 import { NavigationContainer } from '@react-navigation/native';
 
 
 import Icon from 'react-native-vector-icons/Entypo'
+import { AntDesign } from '@expo/vector-icons'; 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment } from "firebase/firestore";
+
 
 
 
@@ -53,6 +55,7 @@ const SettingScreen=()=>{
           ? null
           : undefined,
     })}/>
+    <EdittingProfile.Screen name='ViewPastRuns' component={ViewPastRuns} options={{title:'Past Runs'}}/>
   </EdittingProfile.Navigator>
   )
 };
@@ -61,7 +64,7 @@ const LoginScreen=()=>{
   return(
     <loginStackNav.Navigator>
       <loginStackNav.Screen name='Login' component={Login}/>
-      <loginStackNav.Screen name='CompleteSignUp' component={CompleteSignUp}/>
+      
     </loginStackNav.Navigator>
   )
 }
@@ -70,9 +73,6 @@ const ModalScreen=()=>{
   return(
   <modalScreenPopUpNav.Navigator>
     <modalScreenPopUpNav.Screen name='MatchScreen' component={Match} options={{title:'Match'}}/>
-    <modalScreenPopUpNav.Screen name='PopUpScreen' component={PopupSreen} options={{
-        presentation: 'modal'
-      }}/>
   </modalScreenPopUpNav.Navigator>)
 }
 
@@ -117,11 +117,11 @@ export default function Navigation() {
           <bottomTabs.Navigator
           options={{ keyboardHidesTabBar: true, tabBarStyle: [{ display: 'flex' }, null] }}
         >
-          <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false}}/>
+          <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false, tabBarIcon:()=><AntDesign name="star" size={24} color="black" />}}/>
           <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ 
             tabBarIcon: () => <Icon name="chat"  size={27} /> ,headerShown:false}} />
-          <bottomTabs.Screen name='Activity' component={ActivityScreen} options={{title:'Activity'}}/>
-          <bottomTabs.Screen name='Setting' options={{title:'Settings',headerShown:false}} component={SettingScreen} />
+          <bottomTabs.Screen name='Activity' component={ActivityScreen} options={{title:'Activity', tabBarIcon:()=><MaterialCommunityIcons name="run" size={30} color="black" />}}/>
+          <bottomTabs.Screen name='Setting' options={{title:'Profile',headerShown:false, tabBarIcon:()=><MaterialCommunityIcons name="face-man-profile" size={30} color="black" />}} component={SettingScreen} />
           </bottomTabs.Navigator>
 
        ):( 

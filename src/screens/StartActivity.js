@@ -13,6 +13,11 @@ import { useRoute } from '@react-navigation/native';
 import { Timer } from 'react-native-stopwatch-timer';
 import StopwatchTimer from 'react-native-animated-stopwatch-timer';
 
+import { Feather } from '@expo/vector-icons'; 
+import { AntDesign } from '@expo/vector-icons'; 
+
+
+
 const StartActivity = ({ navigation }) => {
   const route = useRoute();
   const UniqueID = route.params?.UniqueID;
@@ -22,7 +27,6 @@ const StartActivity = ({ navigation }) => {
   const timeOfOriginalRun= route.params?.timeOfOriginalRun;
   const postCode=route.params?.postCode;
   
-  const [isTimerStart, setIsTimerStart] = useState(false);
   const [timerDuration, setTimerDuration] = useState((Number(DurationOfRun) * 1000)*60);
 
   const stopwatchRef=useRef()
@@ -38,7 +42,7 @@ const StartActivity = ({ navigation }) => {
     console.log(timerDuration)
     console.log('user completed time: ',elapsedTime)
 
-    if(userTime>0){
+    if(userTime>=0){
       Alert.alert(
         "Confirm Run",
         "Do You Want To Confirm This Run?",
@@ -86,46 +90,44 @@ const StartActivity = ({ navigation }) => {
         textCharStyle={styles.stopWatchChar}
         trailingZeros={2}
       />
-      <Button
-        title='Starts'
-        onPress={()=>{stopwatchRef.current?.play()}}
-      />
 
-      <Button
-        title='Finish'
-        onPress={handleFinish}
-      />
-
-      <Button 
-      title='Pause'
-      onPress={()=>{stopwatchRef.current?.pause()}}
+      <View style={{flexDirection:'row'}}>
+      <TouchableOpacity
+        onPress={()=>{
+          stopwatchRef.current?.play()
+        }}
+        style={styles.button}
+      >
+        <Feather style={{justifyContent:'center'}}name="play" size={40} color="white" />
+      </TouchableOpacity>
       
-      />
 
 
+      <TouchableOpacity
+        onPress={()=>{
+          handleFinish()
+        }}
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>Finish</Text>
+      </TouchableOpacity>
 
-      {/* <View style={styles.sectionStyle}> */}
-        {/* <Timer
-          totalDuration={timerDuration}
-          msecs
-          start={isTimerStart}
-          options={options}
-          handleFinish={() => {
-            alert('Custom Completion Function');
-          }}
-          getTime={(time) => {
-            console.log(time);
-          }}
-        /> */}
-      {/* </View> */}
-      {/* <TouchableHighlight
-        onPress={() => {
-          setIsTimerStart(!isTimerStart);
-        }}>
-        <Text style={styles.buttonText}>
-          {!isTimerStart ? 'START' : 'STOP'}
-        </Text>
-      </TouchableHighlight> */}
+    
+
+    <TouchableOpacity
+        style={styles.button}
+    
+        onPress={()=>{
+          stopwatchRef.current?.pause()
+        }}
+      >
+        <AntDesign name="pause" size={40} color="white" />
+      </TouchableOpacity>
+
+      </View>
+
+
+    
     </SafeAreaView>
   );
 };
@@ -140,63 +142,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stopWatchStyl: {
-    paddingVertical: 16,
-    paddingHorizontal: 48,
+    paddingVertical: 13,
+    paddingHorizontal: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    backgroundColor: 'black',
-    borderColor: 'gray',
-    borderRadius: 24,
+    borderWidth: 4,
+    backgroundColor: '#346eeb',
+    borderColor: 'white',
+    borderRadius: 90,
+    width:350,
+    bottom:190
   },
   stopWatchChar: {
-    fontSize: 48,
+    fontSize: 41,
     fontWeight: 'bold',
     letterSpacing: 1,
-    color: '#9CCC65',
+    color: 'white',
   },
-  title: {
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: 'bold',
-    padding: 20,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%'
   },
-  sectionStyle: {
-    flex: 1,
-    marginTop: 32,
-    alignItems: 'center',
+  button: {
+    backgroundColor: '#346eeb',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 48,
     alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 50,
+    borderColor: 'white',
     borderWidth: 1,
-    backgroundColor: 'black',
-    borderColor: 'gray',
-    borderRadius: 24,
+    width: 70,
+    height: 70,
+    marginHorizontal:30
   },
   buttonText: {
     fontSize: 20,
-    marginTop: 10,
+    color: 'white',
   },
 });
-
-const options = {
-  container: {
-    backgroundColor: '#FF0000',
-    padding: 5,
-    borderRadius: 5,
-    width: 200,
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 25,
-    color: '#FFF',
-    marginLeft: 7,
-  },
-};
-
-
 
   
 

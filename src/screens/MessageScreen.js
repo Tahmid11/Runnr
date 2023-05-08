@@ -134,8 +134,7 @@ const Message=({navigation})=>{
                     alignItems: "flex-start",
                   }}
                 >
-              <Text style={{ color: "red", fontSize: 16 }}>{convo.nameOfOtherPerson}</Text>
-              <Text>Hey</Text>
+              <Text style={{ color: "black", fontSize: 16, fontWeight:'bold', paddingLeft:10 }}>{convo.nameOfOtherPerson}</Text>
               </View>
             </TouchableOpacity>
             </View>

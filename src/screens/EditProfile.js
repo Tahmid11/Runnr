@@ -7,7 +7,7 @@ import React, { useState, useEffect} from 'react'
 import { Alert,Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, KeyboardAvoidingView, Platform} from 'react-native'
 
 import callingContext from '../components/callingContext';
-import {doc,setDoc,serverTimestamp} from 'firebase/firestore'
+import {doc,setDoc,serverTimestamp, getDoc, updateDoc} from 'firebase/firestore'
 import { db, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import { storage } from '../Firebase Connectivity/Firebase';
 import {ref,uploadBytes, updateMetadata} from 'firebase/storage'
@@ -17,12 +17,12 @@ import { FontAwesome } from '@expo/vector-icons';
 
 const differentRunningTimes=[
     {
-      label:'0-10 minutes', value:1
+      label:'50-60 minutes', value:1
     },
-    {label:'11-20 minutes',value:2
+    {label:'61-70 minutes',value:2
     },
     {
-      label:'21-30 minutes',value:3
+      label:'71-80 minutes',value:3
     }
   ]
 const EditProfile=()=>{
@@ -122,6 +122,8 @@ const EditProfile=()=>{
   const [postCodeOutcome,setPostCodeOutcome]=useState(false);
 
   const [boroughOfUser,setBoroughOfUser]=useState('');
+
+  const [favouriteLocation, setFavouriteLocationToRun]=useState('')
 
   // Modern dateTimePicker (Variables are declared from settings.js).
   const todaysDate = new Date();
@@ -224,6 +226,8 @@ const EditProfile=()=>{
 
 
   const handleEditProfileSubmission=async ()=>{
+    console.log('edrfctvgybhjnkml,cftvgybhujnkml,')
+    console.log('reaches this function.')
 
         const piczx=await handleImageSubmission()
         console.log('This is picxzs' , piczx)
@@ -232,14 +236,6 @@ const EditProfile=()=>{
         console.log('userSelectedTime', userSelectedTime)
         console.log('PhotoURL:', theURLOfPhoto)
         console.log('The name of the guy: ', displayName)
-
-              
-        
-
-
-    if (postCodeOutcome&&userSelectedTime && piczx &&displayName){
-        console.log('Your here!')
-
         if (young) {
           Alert.alert(
             'Error',
@@ -248,27 +244,103 @@ const EditProfile=()=>{
             { cancelable: false }
           );
         } 
-        else {
+
+
+      const docRef = doc(db, 'listOfUsers', user.uid);
+      const documentOfUser = await getDoc(docRef);
+
+
+      if (!photoUrl) {
+        Alert.alert('Error', 'Please pick an image.', [
+          { text: 'OK', onPress: () => console.log('OK Pressed') },
+        ]);
+        return;
+      }
+     if (!hasSelectedDate) {
+        Alert.alert(
+          'Error', 'Please select your date of birth.', 
+          [{ text: 'OK', onPress: () => console.log('OK Pressed')},
+    ]);
+    return;
+  }
+  if (!userSelectedTime) {
+    Alert.alert(
+      'Error', 'Please select your goal weekly running time.', 
+      [{ text: 'OK', onPress: () => console.log('OK Pressed') },
+    ]);
+    return;
+  }
+  if (!favouriteLocation) {
+    Alert.alert(
+      'Error', 'Please enter your favourite location to run.', 
+      [{ text: 'OK', onPress: () => console.log('OK Pressed') },
+    ]);
+    return;
+  }
+  if (!postCodeOutcome) {
+    Alert.alert('Error', 'Please enter a valid postcode.', 
+    [{ text: 'OK', onPress: () => console.log('OK Pressed') },
+    ]);
+    return;
+  }
+  if (!displayName) {
+    Alert.alert('Error', 'Please enter your first name.', 
+    [{ text: 'OK', onPress: () => console.log('OK Pressed') },
+    ]);
+    return;
+  }
+
+
+
+
+
+
+              
+        
+
+    if (postCodeOutcome&&userSelectedTime && piczx &&displayName && favouriteLocation && !young){
+      let userDetailsToSendToFirebase={
+        name:displayName,
+        dOB:reformatDate(`${z}/${y}/${x}`),
+        borough:boroughOfUser,
+        postCode:postCode,
+        weeklyRunningTime:time,
+        favouriteLocation:favouriteLocation,
+        timestamp:serverTimestamp(),
+        picURL:piczx,
+        allUsersSwipedOn:[],
+        allUsersSwipedRightOn:[]
+      }
+
+      if (documentOfUser.exists()) {
+        if (documentOfUser.data().allUsersSwipedOn.length > 0) {
+          userDetailsToSendToFirebase.allUsersSwipedOn = documentOfUser.data().allUsersSwipedOn
+        }
+  
+        if (documentOfUser.data().allUsersSwipedRightOn.length > 0 && documentOfUser.data().allUsersSwipedOn ) {
+          userDetailsToSendToFirebase.allUsersSwipedRightOn = documentOfUser.data().allUsersSwipedRightOn
+        }
+      }
+
+      
+
+      if (documentOfUser.exists()) {
+        await updateDoc(docRef, userDetailsToSendToFirebase)
+      } else {
+        await setDoc(docRef, userDetailsToSendToFirebase)
+      }
+    }
+        
+
+        
+         
           Alert.alert(
             'Success',
             'Nice!',
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
             { cancelable: false })
 
-            try{
-              const userDetailsToSendToFirebase={
-                name:displayName,
-                dOB:`${z}/${y}/${x}`,
-                borough:boroughOfUser,
-                weeklyRunningTime:time,
-                timestamp:serverTimestamp(),
-                picURL:piczx,
-                allUsersSwipedOn:[],
-                allUsersSwipedRightOn:[]
-            }
-            console.log('This is the stuff that is being sent to firebase:', userDetailsToSendToFirebase)
-    
-            await setDoc(doc(db, "listOfUsers",user.uid),userDetailsToSendToFirebase)
+            
             
             navigation.dispatch(
               CommonActions.reset({
@@ -281,13 +353,9 @@ const EditProfile=()=>{
             console.log('Woooo')
             console.log('SUCCESSFUL!')
             submissionSuccess()
-          }
-            catch(error){   
-              console.log('This is the error:'.error)
-            }
-        }
           
-    }
+          
+    
 
   }
 
@@ -298,6 +366,33 @@ const EditProfile=()=>{
 
   }
 
+  useEffect(()=>{
+    const getUserDetails=async()=>{
+      const getUserDoc=await getDoc(doc(db,'listOfUsers', user.uid))
+    if(getUserDoc.exists() ){
+      setDisplayName(getUserDoc.data().name)
+      setPhotoUrl(getUserDoc.data().picURL)
+      setFavouriteLocationToRun(getUserDoc.data().favouriteLocation)
+      setPostCode(getUserDoc.data().postCode)
+      console.log(getUserDoc.data().dOB)
+      setGettingTheSelectedDate(reformatDate2(getUserDoc.data().dOB));
+      setHasUserSelectedDate(true) 
+      
+    }
+    }
+    getUserDetails()
+
+    
+  },[user.id])
+  const reformatDate = (date) => {
+    const dateParts = date.split('/');
+    return `${dateParts[0]}/${dateParts[1]}/${dateParts[2]}`;
+  };
+  const reformatDate2 = (date) => {
+    const dateParts = date.split('/');
+    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  };
+  
 
   
     
@@ -313,7 +408,7 @@ return (
             data={differentRunningTimes}
             mode='default'
             
-            placeholder={userSelectedTime?({time}):('Weekly Running Time')
+            placeholder={userSelectedTime?({time}):('Goal Weekly Running Time')
             }
             search={false}
             onChange={(item)=>{
@@ -344,8 +439,6 @@ return (
           placeholder='Please Enter Your Postcode'
           style={styles.textInputStyle}
         />
-      
-  
         {postCodeOutcome && (
           <View style={styles.checkmarkContainer}>
                   <FontAwesome name="check" size={24} color="green" />
@@ -353,6 +446,15 @@ return (
           </View>
         )}
         </View>
+
+        <TextInput
+          value={favouriteLocation}
+          onChangeText={(value) => {
+            setFavouriteLocationToRun(value);
+          }}
+          placeholder='Favourite Location To Run'
+          style={styles.textInputStyle}
+        />
 
             
   
@@ -391,7 +493,7 @@ return (
 
             {hasSelectedDate ? (
               <Text style={styles.font}>
-                {z + "/" + y + "/" + x}
+                {reformatDate(`${z}/${y}/${x}`)}
               </Text>
             ) : (
               <Text style={styles.font}>Select DOB </Text>
@@ -419,7 +521,7 @@ return (
 
     <TouchableOpacity 
           style={{
-            backgroundColor: '#FF5A5F',
+            backgroundColor: '#346eeb',
             borderRadius: 20,
             padding: 10,
             width: '80%',
@@ -438,8 +540,8 @@ return (
     
     </KeyboardAvoidingView>
   );
+        }
 
-}
 
 export default EditProfile;
 
