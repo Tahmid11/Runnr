@@ -24,7 +24,7 @@ const Activity = ({navigation}) => {
     const {user}=callingContext();
     // Modern dateTimePicker (Variables are declared from settings.js).
   const todaysDate = new Date();
-  const outCome=addHours(todaysDate)
+  const todayDate=addHours(todaysDate)
 
   
 
@@ -103,12 +103,12 @@ const Activity = ({navigation}) => {
     let selectedDateTime = new Date(gettingTheSelectedDate+"T"+timing);
     console.log(selectedDateTime)
 
-    console.log('This is the out come output:',outCome)
+    console.log('This is the out come output:',todayDate)
     console.log('Which radio button:', whichRadioButton);
   
 
 
-     if(selectedDateTime < outCome){
+     if(selectedDateTime < todayDate){
       Alert.alert(
         "Date Error",
         "You cannot select a date and time before the current date/time. Please select a date/time in the FUTURE!",

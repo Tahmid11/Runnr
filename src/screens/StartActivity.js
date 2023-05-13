@@ -86,8 +86,8 @@ const StartActivity = ({ navigation }) => {
       <StopwatchTimer
         ref={stopwatchRef}
         initialTimeInMs={(DurationOfRun * 1000) *60}
-        containerStyle={styles.stopWatchStyl}
-        textCharStyle={styles.stopWatchChar}
+        textCharStyle={styles.numberForStopWatch}
+        containerStyle={styles.theStyleOfCountdown}
         trailingZeros={2}
       />
 
@@ -100,9 +100,6 @@ const StartActivity = ({ navigation }) => {
       >
         <Feather style={{justifyContent:'center'}}name="play" size={40} color="white" />
       </TouchableOpacity>
-      
-
-
       <TouchableOpacity
         onPress={()=>{
           handleFinish()
@@ -111,9 +108,6 @@ const StartActivity = ({ navigation }) => {
       >
         <Text style={styles.buttonText}>Finish</Text>
       </TouchableOpacity>
-
-    
-
     <TouchableOpacity
         style={styles.button}
     
@@ -123,11 +117,7 @@ const StartActivity = ({ navigation }) => {
       >
         <AntDesign name="pause" size={40} color="white" />
       </TouchableOpacity>
-
       </View>
-
-
-    
     </SafeAreaView>
   );
 };
@@ -137,11 +127,11 @@ export default StartActivity;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 11,
   },
-  stopWatchStyl: {
+  theStyleOfCountdown: {
     paddingVertical: 13,
     paddingHorizontal: 30,
     alignItems: 'center',
@@ -153,7 +143,7 @@ const styles = StyleSheet.create({
     width:350,
     bottom:190
   },
-  stopWatchChar: {
+  numberForStopWatch: {
     fontSize: 41,
     fontWeight: 'bold',
     letterSpacing: 1,

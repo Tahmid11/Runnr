@@ -68,8 +68,6 @@ const FinishScreen=({navigation})=>{
   
     const calculatePoints=async()=>{
         let points=0
-
-
         if(!dateOfOriginalRun && !timeOfOriginalRun){
           if(totalActivityTime===DurationOfRun){
             points=50
@@ -80,12 +78,9 @@ const FinishScreen=({navigation})=>{
           else if(totalActivityTime<=(DurationOfRun/2)){
             points=20
           }
-
-
         }
         else{
 
-        
         if(correctlyUpdatedOriginalDateTimeOfRun===dateTimeRunTookPlace && totalActivityTime===DurationOfRun ){
             points=100
         }
@@ -125,8 +120,6 @@ const FinishScreen=({navigation})=>{
         else if((totalActivityTime>(DurationOfRun/2) &&correctlyUpdatedOriginalDateTimeOfRun<dateTimeRunTookPlace )){
             points=30
         }
-       
-
         else if((totalActivityTime<=(DurationOfRun/2)&&correctlyUpdatedOriginalDateTimeOfRun!=dateTimeRunTookPlace )){
             points=20
         }
@@ -151,7 +144,7 @@ const FinishScreen=({navigation})=>{
     // Updating The Run To Be Completed
 
     const updatingUserRuns = async (pointsForUser,dateTimeRunTookPlace) => {
-
+      try{
         const docRef = doc(db, 'ScheduleRuns', user.uid);
         const gettingDocToUpdate = await getDoc(docRef);
 
@@ -170,6 +163,13 @@ const FinishScreen=({navigation})=>{
         //   Updates the whole field.
           await updateDoc(docRef, { activity: updatedActivity });
         }
+
+      }
+      catch(err){
+        // console.log('error user points:', err)
+      }
+
+        
       };
       
 
@@ -180,7 +180,8 @@ const FinishScreen=({navigation})=>{
             <FontAwesome5 name="medal" size={100} color="#346eeb" />
             <Text style={styles.text}>Original Time You Set In Mins: {timeInMinutes}</Text>
             <Text style={styles.text}>What You Completed In Mins: {whatUserDidInMinutes}</Text>
-            <Text style={styles.text}>Today's date: {`${dateTimeRunTookPlace.getDate().toString().padStart(2,'0')}/${(dateTimeRunTookPlace.getMonth()+1).toString().padStart(2,'0')}/${dateTimeRunTookPlace.getFullYear()}`}</Text>
+            <Text style={styles.text}>Today's date: 
+            {`${dateTimeRunTookPlace.getDate().toString().padStart(2,'0')}/${(dateTimeRunTookPlace.getMonth()+1).toString().padStart(2,'0')}/${dateTimeRunTookPlace.getFullYear()}`}</Text>
             <Text style={styles.text}>Points Earned: {userPoints}</Text>
 
             <TouchableOpacity

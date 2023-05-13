@@ -10,12 +10,7 @@ import {
   Image,
 } from 'react-native';
 import {
-  doc,
-  onSnapshot,
-  arrayUnion,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
+  doc,onSnapshot,arrayUnion,updateDoc,getDoc,} from "firebase/firestore";
 import callingContext from '../components/callingContext';
 import { useRoute } from '@react-navigation/native';
 import { db} from '../Firebase Connectivity/Firebase';
@@ -63,11 +58,7 @@ useEffect(() => {
         });
       
       return unsubscribe;
-
     }
-    
-
-    
   };
 
   fetchMessages();

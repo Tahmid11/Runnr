@@ -337,7 +337,7 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
               ) : null;
             }
           }
-          stackSize={5}
+          stackSize={10}
         />
         </View>
 
@@ -457,7 +457,8 @@ const checkingIfUsersAlreadyHaveAConvo=async()=>{
 export default Match
 const styles = {
   container: {
-    flex: 1
+    flex: 1,
+
   },
   header: {
     color: 'red',

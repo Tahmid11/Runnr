@@ -33,10 +33,12 @@ const Message=({navigation})=>{
               console.log('Enters first use effect.')
               if(doc.data().peopleWhoAreMessagingEachOther[0]!==user.uid)
               {
-                listOfConvos.push({conversationID:doc.id,idOfOtherPerson:doc.data().peopleWhoAreMessagingEachOther[0], messages:doc.data().messages, picture:null})
+                listOfConvos.push({conversationID:doc.id,idOfOtherPerson:doc.data().peopleWhoAreMessagingEachOther[0], 
+                  messages:doc.data().messages, picture:null})
               }
               if(doc.data().peopleWhoAreMessagingEachOther[1]!==user.uid){
-                listOfConvos.push({conversationID:doc.id,idOfOtherPerson:doc.data().peopleWhoAreMessagingEachOther[1], messages:doc.data().messages, picture:null})
+                listOfConvos.push({conversationID:doc.id,idOfOtherPerson:doc.data().peopleWhoAreMessagingEachOther[1], 
+                  messages:doc.data().messages, picture:null})
 
               }
 
@@ -71,8 +73,10 @@ const Message=({navigation})=>{
           if(theListOfConversations){
             theListOfConversations.forEach((conversation)=>{
               if(doc.id===conversation.idOfOtherPerson){
-                details.push({id:doc.id,idOfConversation:conversation.conversationID,nameOfOtherPerson:doc.data().name, messages:conversation.messages, picture:doc.data().picURL})
-
+                details.push({id:doc.id,
+                  idOfConversation:conversation.conversationID,
+                  nameOfOtherPerson:doc.data().name, messages:conversation.messages, 
+                  picture:doc.data().picURL})
               }
             })
             
@@ -100,18 +104,13 @@ const Message=({navigation})=>{
         <View>
           <FlatList
           data={listOfAllDetails}
-          
           renderItem={({item:convo})=>{
-
-            return(
-            <View>
-            <TouchableOpacity
+            return(<View><TouchableOpacity
               style={{
                 flexDirection: "row",
                 alignItems: "center",
                 padding: 10,
-                width: "100%",
-              }}
+                width: "100%",}}
               key={convo.id}
               onPress={() =>
                 navigation.navigate("Conversation", {
@@ -129,11 +128,8 @@ const Message=({navigation})=>{
               }}
               />
               <View
-                  style={{
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                  }}
-                >
+                  style={{flexDirection: "column",alignItems: "flex-start",}}
+              >
               <Text style={{ color: "black", fontSize: 16, fontWeight:'bold', paddingLeft:10 }}>{convo.nameOfOtherPerson}</Text>
               </View>
             </TouchableOpacity>
@@ -148,136 +144,3 @@ const Message=({navigation})=>{
 }
 
 export default Message;
-{/* <FlatList
-            data={conversations}
-            renderItem={({ item: conversation }) => (
-              <TouchableOpacity
-                key={conversation.id}
-                onPress={() =>
-                  navigation.navigate("Conversation", {
-                    conversationId: conversation.id,
-                    nameOfPerson: conversation.nameOfPerson,
-                    pictureOfTheOtherPerson: conversation.picURL
-                  })
-                }
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  padding: 10,
-                  width: "100%",
-                }}
-              >
-                <Image
-                  source={{ uri: conversation.picURL }}
-                  style={{
-                    height: 50,
-                    width: 50,
-                    borderRadius: 25,
-                    marginRight: 10,
-                  }}
-                />
-                <View
-                  style={{
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <Text style={{ color: "black", fontSize: 16 }}>
-                    {conversation.nameOfPerson}
-                  </Text>
-                  {
-                   conversation.messages.length>0?(
-                    <Text style={{ color: "gray", fontSize: 14 }}>{conversation.messages[conversation.messages.length - 1].userInput}</Text>
-                   ):(<Text style={{ color: "gray", fontSize: 14 }}>Something</Text>)
-                  }
-                  <Text>{conversation.messages}</Text>
-                  
-                </View>
-              </TouchableOpacity>
-            )}
-             keyExtractor={(item) => item.id}
-           />  */}
-
-
-           // Old attempt didnt work..
-    // const route = useRoute()
-    // const matchedWithUserPic = route.params?.otherUserPicture
-    // const theOtherPersonsName= route.params?.otherUsersName
-    // console.log('Matchedwithuser picture:',matchedWithUserPic)
-    // console.log('the other persons name:', theOtherPersonsName)
-
-
-
-
-
-    // if (convoID){
-    //   console.log('This entering the if statement')
-    //   let userIds=convoID.split(':')
-    //   console.log('user something:', userIds[0], 'user something else', userIds[1])
-    // }
-    // // console.log(matchedWithUser, IDOfOtherUser)
-    // // let generatedID=generateCombinedId(user.id,IDOfOtherUser)
-    // console.log('This is the convo ID', convoID)
-    
-    
-
-    // Splitting ID to see whos what!
-
-
-      
-
-
-
-
-
-
-
-  
-
-  // Creating a conversation:
-  // function generateCombinedId(userA_id, userB_id){
-  //   const array=[]
-  //   array.push(userA_id,userB_id)
-  //   array.sort()
-
-  //   return `${array[0]}:${array[1]}`;
-  // };
-
-  // const gettingTheProfile = async (idOfUser) => {
-  //   console.log('Geting the profile pic of the other person', idOfUser)
-  //   const getProfilePicOfOtherUserInConvo = doc(db, 'listOfUsers', idOfUser);
-  //   const getDocument = await getDoc(getProfilePicOfOtherUserInConvo);
-  //   console.log('This is the other persons profile picture', getDocument.data().picURL)
-  //   return getDocument.data().picURL;
-  // };
-
-  //   useEffect(() => {
-  //       const fetchConversationsAndPictures = async () => {
-  //         const q = query(collection(db, "ConversationsOfUsers"), where('_id', "==", generatedID ));
-  //         const querySnapshot = await getDocs(q);
-  //         console.log('This is query snapshot:',querySnapshot)
-  //         const convoList = [];
-      
-  //         for (const docu of querySnapshot.docs) {
-  //           // const otherUserId = IDOfOtherUser
-  //           const picURL = await gettingTheProfile(otherUserId);
-  //           const nameOfPerson=matchedWithUser.name
-  //           convoList.push({ id: docu.id, picURL, nameOfPerson, messages, ...docu.data() });
-  //         }
-  //         setConversations(convoList)
-  //       };
-  //       fetchConversationsAndPictures();
-  //     }, [user.uid]);
-
-  // New attempt Idea:
-  // 1) Get the current user id and fetch all documents in 'ConversationsOfUsers', where the fields inside of it include 
-  // the current user logged in.
-  // 2) Do two seperate ones for each field.
-  // 3) Get them and remove and duplicates.
-
-   // theListOfConversations.forEach((doc)=>{
-        //   const docRef = doc(db, "listOfUsers", theListOfConversations.id);
-        //   const docSnap = await getDoc(docRef);
-
-
-        // })

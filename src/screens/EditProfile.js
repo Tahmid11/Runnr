@@ -1,4 +1,4 @@
-import { SelectList } from 'react-native-dropdown-select-list'
+
 import { Dropdown } from 'react-native-element-dropdown';
 // Date Time Picker
 import DatePicker,{ getFormatedDate, getToday } from 'react-native-modern-datepicker';
@@ -127,13 +127,15 @@ const EditProfile=()=>{
 
   // Modern dateTimePicker (Variables are declared from settings.js).
   const todaysDate = new Date();
-  const [calendarOpen,setCalendarOpen]=useState(false)
+  
   const [maxYear,setMaxYear]=useState(todaysDate.getFullYear()-18)
   const [maxMonth,setMonth]=useState(todaysDate.getMonth()+1)
   const [maxDay,setDay]=useState(todaysDate.getDate())
-  const [x,setX]=useState()
-  const [y,setY]=useState()
-  const [z,setZ]=useState()
+  const [year,setyear]=useState()
+  const [month,setmonth]=useState()
+  const [day,setday]=useState()
+
+  const [calendarOpen,setCalendarOpen]=useState(false)
   const [hasSelectedDate, setHasUserSelectedDate]=useState(false)
   const [gettingTheSelectedDate,setGettingTheSelectedDate]=useState();
   const[young,setYoungness]=useState(false);
@@ -160,11 +162,13 @@ const EditProfile=()=>{
         const dayString=maxDay.toString().padStart(2,'0')
         
         
-        if (x && y && z)
+        if (year && month && day)
         {
-            console.log('This is x' + x + ' this is y : ' + y + ' this is z ' + z)
+            console.log('This user year' + year + ' this is users month : ' + month + ' this is users day ' + day)
             console.log('This is the yearString: ' + Number(yearString))
-        if (Number(yearString)>=Number(x) || Number(yearString)==Number(x) && Number(monthString)>=Number(y) || Number(yearString)==Number(x) && Number(monthString)==Number(y) &&  Number(dayString)>=Number(z)){
+        if (Number(yearString)>Number(year) || Number(yearString)==Number(year) 
+        && Number(monthString)>Number(month) || Number(yearString)==Number(year) 
+        && Number(monthString)==Number(month) &&  Number(dayString)>=Number(day)){
             setYoungness(false)
             console.log('Your good!')
         }
@@ -173,15 +177,15 @@ const EditProfile=()=>{
             console.log('Too young sorry.')
         }
     }
-      }, [x, y, z]);
+      }, [year, month, day]);
 
     useEffect(()=>{
 
-            const h=gettingTheSelectedDate;
-            if (h){
-                setX(h.split("/")[0].toString())
-                setY(h.split('/')[1].toString())
-                setZ(h.split('/')[2].toString())
+            const userSelected=gettingTheSelectedDate;
+            if (userSelected){
+                setyear(userSelected.split("/")[0].toString())
+                setmonth(userSelected.split('/')[1].toString())
+                setday(userSelected.split('/')[2].toString())
             }
         
         else{
@@ -216,8 +220,6 @@ const EditProfile=()=>{
         setBoroughOfUser('')
         throw error;
       })
-      
-      
   }, [postCode]);
 
   // End Of postcode validation.
@@ -243,6 +245,7 @@ const EditProfile=()=>{
             [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
             { cancelable: false }
           );
+          return;
         } 
 
 
@@ -301,7 +304,7 @@ const EditProfile=()=>{
     if (postCodeOutcome&&userSelectedTime && piczx &&displayName && favouriteLocation && !young){
       let userDetailsToSendToFirebase={
         name:displayName,
-        dOB:reformatDate(`${z}/${y}/${x}`),
+        dOB:reformatDate(`${day}/${month}/${year}`),
         borough:boroughOfUser,
         postCode:postCode,
         weeklyRunningTime:time,
@@ -329,11 +332,7 @@ const EditProfile=()=>{
       } else {
         await setDoc(docRef, userDetailsToSendToFirebase)
       }
-    }
-        
-
-        
-         
+    }         
           Alert.alert(
             'Success',
             'Nice!',
@@ -353,10 +352,6 @@ const EditProfile=()=>{
             console.log('Woooo')
             console.log('SUCCESSFUL!')
             submissionSuccess()
-          
-          
-    
-
   }
 
   const submissionSuccess=()=>{
@@ -400,6 +395,7 @@ return (
     <KeyboardAvoidingView
     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     style={{ flex: 1 }}
+    keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 80} 
   >
     <View style={styles.container}>
       <View style={styles.viewStyle}>
@@ -493,7 +489,7 @@ return (
 
             {hasSelectedDate ? (
               <Text style={styles.font}>
-                {reformatDate(`${z}/${y}/${x}`)}
+                {reformatDate(`${day}/${month}/${year}`)}
               </Text>
             ) : (
               <Text style={styles.font}>Select DOB </Text>
@@ -556,7 +552,7 @@ const styles = StyleSheet.create({
             flex: 1,
             backgroundColor: 'rgba(0,0,0,0.5)',
             justifyContent: 'center',
-            alignItems: 'center',
+            alignItems: 'center'
           },
         viewStyle: {
           alignContent: "center"
@@ -597,7 +593,7 @@ const styles = StyleSheet.create({
       height: 110,
       borderRadius: 55,
       backgroundColor: '#ccc',
-      overflow: 'hidden',
+      overflow: 'hidden'
     },
     buttonPosition: {
       position: 'absolute',
@@ -623,7 +619,7 @@ const styles = StyleSheet.create({
       paddingHorizontal:10,
       paddingVertical:2,
       shadowOffset: { width: 0, height: 2 }, 
-      height: 40, 
+      height: 40
   },
   font:{
       fontSize:20,

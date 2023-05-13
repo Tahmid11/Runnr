@@ -1,22 +1,44 @@
 
-import React,{useState} from "react";
+import React,{useState, useEffect} from "react";
 import { View, Text, FlatList, StyleSheet} from "react-native";
 import { useRoute } from '@react-navigation/native';
-
+import callingContext from "../components/callingContext";
+import { db, storage, getDownloadURL} from '../Firebase Connectivity/Firebase';
+import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
 const ViewPastRuns=({navigation})=>{
 
   const route = useRoute();
-  const listOfScheduledRuns = route.params?.data.listOfScheduledRuns.reverse();
+  const{user}=callingContext()
+  
+  const [listOfScheduledRuns, setListOfScheduledRuns]=useState([])
+  useEffect(()=>{
+    const fetchScheduledRuns=async()=>{
+      const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
+      const doesDocExist=await getDoc(scheduledRunRef)
+      const array=[]
+      if (doesDocExist.exists()){
+        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
+          if(doc.data().activity){
+            doc.data().activity.forEach(element => {
+            if(element.points>=0 && element.points && element.completed && element.completed===true){
+                array.push(element)
+            }    
+            });
+            setListOfScheduledRuns(array.reverse())
+        }
+      })
+      return unsub;
+      }
+    }
+    fetchScheduledRuns()
+  },[user.uid, listOfScheduledRuns])
 
     return (
       <View>
-
       <FlatList
       contentContainerStyle={{ flexGrow: 1 }}
       data={listOfScheduledRuns}
-
       renderItem={({ item }) => {
-
         return (
          <View style={styles.scheduledRunContainer} key={item.UniqueID}>
             <View style={styles.scheduledRunInfo}>

@@ -6,10 +6,9 @@ import { useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 
+
 const Login = ({navigation}) => {
   const { onGoogleButtonPress, setLoading,isLoading, user} = callingContext();
-
-  
   const handleGoogleSignIn = async () => {
     console.log('This is the loading value currently: ' + isLoading)
     try {
@@ -25,38 +24,6 @@ const Login = ({navigation}) => {
     }
   };
 
-  
-  useEffect(()=>{
-    const checkUserHasSignedUpFully=async()=>{
-      if(user && user.uid){
-        const documentLocation=doc(db,'listOfUsers', user.uid)
-      const getDocument=await getDoc(documentLocation)
-      
-      if (!getDocument.exists()||
-      !getDocument.data().borough ||
-      !getDocument.data().dOB ||
-      !getDocument.data().name ||
-      !getDocument.data().timestamp ||
-      !getDocument.data().weeklyRunningTime){
-        navigation.navigate("CompleteSignUp");
-        }
-        
-      else{
-        navigation.navigate('Match')
-      }
-
-      }
-      
-    }
-   
-    if(user)
-    {
-      checkUserHasSignedUpFully();
-    }
-    
-    
-  },[user])
-
   return (
     <View style={styles.wrap}>
       <Text style={{alignItems: 'center'}}><MaterialCommunityIcons name="run" size={300} color="white" /></Text> 
@@ -66,8 +33,11 @@ const Login = ({navigation}) => {
       </TouchableOpacity>
     </View>
   );
-
 };
+
+
+
+
 const styles=StyleSheet.create({
   wrap:{
     flex:1,

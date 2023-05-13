@@ -3,7 +3,6 @@ import { Text,Button,View, Platform, ScrollView, Touchable, TouchableOpacity, St
 import auth from '@react-native-firebase/auth';
 import callingContext from "../components/callingContext";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import * as ImagePicker from 'expo-image-picker';
 import { db, storage, getDownloadURL} from '../Firebase Connectivity/Firebase';
 import { ref, uploadBytes } from '@firebase/storage';
 import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
@@ -33,7 +32,6 @@ const Setting=({navigation})=>{
     useEffect(()=>{
         const displayProfilePictureNameAndPoints=async()=>{
             const docRef=doc(db,'listOfUsers',user.uid)
-            
             const unsub=onSnapshot(docRef,(doc)=>{
                 if (doc.exists()&&doc.data().name && doc.data().picURL){
                     setusername(doc.data().name)
@@ -46,7 +44,6 @@ const Setting=({navigation})=>{
                         })
                     }
                 }
-
             })
             return unsub;
 
@@ -56,8 +53,7 @@ const Setting=({navigation})=>{
     },[user.uid])
 
     useEffect(()=>{
-
-        const gettingOtherUsersPoints=()=>{
+        const gettingOtherUsersIDs=()=>{
             const conversationRef = collection(db, "ConversationsOfUsers");
             const q=query(conversationRef,where('peopleWhoAreMessagingEachOther', 'array-contains', user.uid))
             
@@ -73,16 +69,21 @@ const Setting=({navigation})=>{
 
                     listOfOtherUserIDs.push(doc.data().peopleWhoAreMessagingEachOther[1])
                   }
-    
                 });
                 setOtherPeoplesIDs(listOfOtherUserIDs)
         })
         return unsubscribe;
         }
 
-        gettingOtherUsersPoints();
+        gettingOtherUsersIDs();
        
 },[otherPeoplesIDs, user.uid])
+
+
+
+
+
+
 
 useEffect(() => {
     const getOtherPeoplesPoints = async () => {
@@ -91,8 +92,8 @@ useEffect(() => {
         for (const ID of otherPeoplesIDs) {
           const docRef = doc(db, "listOfUsers", ID);
           const getUserDocument = await getDoc(docRef);
-  
-          if (getUserDocument.data().points) {
+          
+          if (getUserDocument.data().points!==undefined) {
             tempArray.push({
               id: getUserDocument.id,
               personName: getUserDocument.data().name,
@@ -101,7 +102,7 @@ useEffect(() => {
           }
         }
         setOtherPeoplesNamesAndPoints(tempArray);
-        if (currentUserNameAndPoints){
+        if (currentUserNameAndPoints && currentUserNameAndPoints.personPoints !== undefined){
             tempArray.push(currentUserNameAndPoints)
         }
         setAllUserNamesAndPoints(tempArray.sort((a,b)=>{
@@ -112,76 +113,12 @@ useEffect(() => {
     getOtherPeoplesPoints();
   }, [user.uid, otherPeoplesIDs, currentUserNameAndPoints]);
   
-  useEffect(()=>{
-    const fetchScheduledRuns=async()=>{
-      
-      const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
-      
-      const doesDocExist=await getDoc(scheduledRunRef)
-      const array=[]
-      
-      if (doesDocExist.exists()){
-        
-        const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-
-
-          if(doc.data().activity){
-            doc.data().activity.forEach(element => {
-            if(element.points!==0 && element.points){
-                array.push(element)
-            }    
-            });
-            setListOfScheduledRuns(array)
-        }
-        
-        setScheduledRuns(true)
-      })
-      
-      return unsub;
-      }
-    }
-    fetchScheduledRuns()
-  },[user.uid, listOfScheduledRuns])
-
-
-//   useEffect(()=>{
-//     let array=[]
-//     if(otherPeoplesNamesAndPoints){
-//         otherPeoplesNamesAndPoints.map((element)=>{
-//             array.push({
-//                 personName:element.name,
-//                 personsPoints:element.points
-//             })
-//         })
-        
-        
-//     }
-//     if(username && usersPoints && !array.includes(username)){
-//         array.push({
-//             personName:username,
-//             personsPoints:usersPoints
-//         })
-        
-//     }
-
-    
-    
-
-
-//   },[ usersPoints, user.uid])
-    
-  
   
 
-    // End of image picker code
+
     return( 
-
         <View style={{flex:1}}>
-         
-
-        
             <View style={{flexDirection:'row'}}>
-
             <Image source={{uri:usersPicture}} style={{
             justifyContent: 'center',
             alignItems: 'center',
@@ -201,9 +138,6 @@ useEffect(() => {
             } 
             </View>
             </View>
-            
-             
-           
         <View>
         </View>
         <ScrollView>
@@ -218,18 +152,19 @@ useEffect(() => {
         </TouchableOpacity>
 
         <TouchableOpacity  onPress={()=>{
-            if(listOfScheduledRuns){
+            // if(listOfScheduledRuns){
                 {console.log(listOfScheduledRuns)}
-                navigation.navigate('ViewPastRuns', {
+                // navigation.navigate('ViewPastRuns', {
                     
-                    data:{listOfScheduledRuns}
-                })
-            }
+                //     data:{listOfScheduledRuns}
+                // })
+                navigation.navigate('ViewPastRuns')
+            // }
            
         }}
         style={styles.previousRuns}
         >
-            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Previous Runs</Text>
+            <Text style={{textAlign:'center', color:'#FFF', fontWeight: 'bold'}}>Previous Scheduled Runs</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -255,29 +190,26 @@ useEffect(() => {
 
         <ScrollView style={{height:110}}>
         {
-        allUserNamesAndPoints && allUserNamesAndPoints.length > 0 && allUserNamesAndPoints.map((element, index) => {
-            let rank=index
-                return (
-                    <View key={index} style={styles.leaderboardItem}>
-                    
-                        
-                    <Text style={{fontSize: 20,paddingLeft: 10}}>{rank+1}</Text>
-                    <Text style={styles.leaderboardName}>{element.personName}</Text>
-                    <Text style={styles.leaderboardPoints}>Points: {element.personPoints}</Text>
-                    
-                    </View>
-            )
-        }
-        )
+            allUserNamesAndPoints && allUserNamesAndPoints.length>0?(
+                allUserNamesAndPoints && allUserNamesAndPoints.length > 0 && allUserNamesAndPoints.map((element, index) => {
+                    let rank=index
+                        return (
+                            <View key={index} style={styles.leaderboardItem}>
+                            <Text style={{fontSize: 20,paddingLeft: 10}}>{rank+1}</Text>
+                            <Text style={styles.leaderboardName}>{element.personName}</Text>
+                            <Text style={styles.leaderboardPoints}>Points: {element.personPoints}</Text>
+                            
+                            </View>
+                    )
+                }
+                )
+            ):(
+                null
+            )   
     }
     </ScrollView>
-
-
-
-
     </ScrollView>
-  
-        </View>
+</View>
     );
 
 }

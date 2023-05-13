@@ -55,7 +55,7 @@ const SettingScreen=()=>{
           ? null
           : undefined,
     })}/>
-    <EdittingProfile.Screen name='ViewPastRuns' component={ViewPastRuns} options={{title:'Past Runs'}}/>
+    <EdittingProfile.Screen name='ViewPastRuns' component={ViewPastRuns} options={{title:'Past Scheduled Runs'}}/>
   </EdittingProfile.Navigator>
   )
 };
@@ -117,11 +117,15 @@ export default function Navigation() {
           <bottomTabs.Navigator
           options={{ keyboardHidesTabBar: true, tabBarStyle: [{ display: 'flex' }, null] }}
         >
-          <bottomTabs.Screen name='Match' component={ModalScreen} options={{headerShown:false, tabBarIcon:()=><AntDesign name="star" size={24} color="black" />}}/>
+          <bottomTabs.Screen name='Match' component={ModalScreen} 
+          options={{headerShown:false, tabBarIcon:()=><AntDesign name="star" size={24} color="black" />}}/>
           <bottomTabs.Screen name='Message'  component={MessageScreen} options={{ 
             tabBarIcon: () => <Icon name="chat"  size={27} /> ,headerShown:false}} />
-          <bottomTabs.Screen name='Activity' component={ActivityScreen} options={{title:'Activity', tabBarIcon:()=><MaterialCommunityIcons name="run" size={30} color="black" />}}/>
-          <bottomTabs.Screen name='Setting' options={{title:'Profile',headerShown:false, tabBarIcon:()=><MaterialCommunityIcons name="face-man-profile" size={30} color="black" />}} component={SettingScreen} />
+          <bottomTabs.Screen name='Activity' component={ActivityScreen} 
+          options={{title:'Activity', tabBarIcon:()=><MaterialCommunityIcons name="run" size={30} color="black" />}}/>
+          <bottomTabs.Screen name='Setting' options={{title:'Profile',headerShown:false, 
+          tabBarIcon:()=><MaterialCommunityIcons name="face-man-profile" size={30} color="black" />}} 
+          component={SettingScreen} />
           </bottomTabs.Navigator>
 
        ):( 
