@@ -1,4 +1,6 @@
-
+// The main screen... MATCHING SCREEN!
+// here users are  matched with each, can swipe etc.
+// Pop screen code is also here.
 
 
 // Image Picker= https://docs.expo.dev/versions/latest/sdk/imagepicker/#mediatypeoptions

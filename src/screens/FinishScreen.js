@@ -1,4 +1,4 @@
-
+// After the user completes an activity, this screen will be shown displaying points, dates etc.
 import React,{useEffect, useState} from "react";
 import { Text,  TouchableOpacity, StyleSheet,SafeAreaView} from 'react-native'
 import { useRoute } from '@react-navigation/native';

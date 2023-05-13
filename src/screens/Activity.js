@@ -1,4 +1,6 @@
-
+// The activity screen:
+// Users should be able to start or schedule a run
+// Built Up Using Action Plan questions.
 import React, { useState, useEffect } from "react";
 import { Text, View, TextInput, TouchableOpacity, Modal,StyleSheet, ScrollView, Alert} from 'react-native'
 import { db } from "../Firebase Connectivity/Firebase";

@@ -1,4 +1,4 @@
-
+// This piece of code fetches a users previous scheduled runs.
 import React,{useState, useEffect} from "react";
 import { View, Text, FlatList, StyleSheet} from "react-native";
 import { useRoute } from '@react-navigation/native';
@@ -43,7 +43,15 @@ const ViewPastRuns=({navigation})=>{
          <View style={styles.scheduledRunContainer} key={item.UniqueID}>
             <View style={styles.scheduledRunInfo}>
             <Text style={styles.scheduledRunText}>Date Of Run: {item.DateOfRun}</Text>
-              <Text style={styles.scheduledRunText}>Run Duration: {item.DurationOfRun} minutes</Text>
+              <Text style={styles.scheduledRunText}>Planned Run Duration: {item.DurationOfRun} minutes</Text>
+              {
+                ((((item.ActualCompletedRunTime)/1000)/60).toFixed(2))<60 && item.ActualCompletedRunTime?(
+                  <Text style={styles.scheduledRunText}>Completd Duration: {((((item.ActualCompletedRunTime)/1000)/60).toFixed(2))} seconds</Text>
+
+                ):(
+                  <Text style={styles.scheduledRunText}>Completd Duration: {((((item.ActualCompletedRunTime)/1000)/60).toFixed(2))} minutes</Text>
+                )
+              }
               <Text style={styles.scheduledRunText}>Date Of When Run Was Completed: {item.dateRunWasCompleted}</Text>
               <Text style={styles.scheduledRunText}>Points Achieved: {item.points}</Text>
             </View>

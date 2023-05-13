@@ -1,3 +1,4 @@
+// The first screen that the user is met with when the application is opened.
 import React from "react";
 import { Text,View,Button, TouchableOpacity, StyleSheet } from "react-native";
 import callingContext from "../components/callingContext";

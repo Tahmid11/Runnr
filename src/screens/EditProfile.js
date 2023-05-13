@@ -1,3 +1,7 @@
+// Edit profile screen where users can edit their profile
+// Also the first page users are rediredcted to when they first signin .
+
+
 
 import { Dropdown } from 'react-native-element-dropdown';
 // Date Time Picker

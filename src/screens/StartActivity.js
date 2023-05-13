@@ -1,3 +1,5 @@
+// User is redirected here when they start their activity;
+// The timer is here.
 import React, { useState,  useRef } from 'react';
 import {Text,View,TouchableOpacity,SafeAreaView,StyleSheet,Alert} from 'react-native';
 import { useRoute } from '@react-navigation/native';

@@ -1,3 +1,6 @@
+// The list of different conversations.
+
+
 import React, { useEffect, useState } from "react";
 import { Text,View,TouchableOpacity ,Image, StyleSheet, FlatList} from "react-native";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";

@@ -1,3 +1,5 @@
+// Setting Page where user can edit their profile, logout and view past scheduled runs.
+
 import React , { useState,  useEffect} from "react";
 import { Text,View,  ScrollView, TouchableOpacity, StyleSheet, Image} from "react-native";
 import auth from '@react-native-firebase/auth';
@@ -187,7 +189,7 @@ useEffect(() => {
         <Text style={{color:'black', fontSize:30, alignSelf:'center', paddingTop:10, fontWeight:'bold'}}>LEADERBOARD</Text>
         
 
-        <ScrollView style={{height:110}}>
+        <ScrollView style={{height:150}}>
         {
             allUserNamesAndPoints && allUserNamesAndPoints.length>0?(
                 allUserNamesAndPoints && allUserNamesAndPoints.length > 0 && allUserNamesAndPoints.map((element, index) => {
