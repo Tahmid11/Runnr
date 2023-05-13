@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { Text, View, Button, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView, Alert, FlatList} from 'react-native'
+import { Text, View, TextInput, TouchableOpacity, Modal,StyleSheet, ScrollView, Alert} from 'react-native'
 import { db } from "../Firebase Connectivity/Firebase";
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc } from "firebase/firestore";
+import {  doc, getDoc,  updateDoc, arrayUnion, onSnapshot, setDoc, arrayRemove } from "firebase/firestore";
 import callingContext from '../components/callingContext';
 import DatePicker from 'react-native-modern-datepicker';
 import { LogBox } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons'; 
 
-
-import { useNavigation,  CommonActions} from '@react-navigation/native';
 
 import RadioGroup from 'react-native-radio-buttons-group';
 import { v4 } from 'uuid';
@@ -22,14 +20,14 @@ polyfillWebCrypto();
 const Activity = ({navigation}) => {
   
     const {user}=callingContext();
-    // Modern dateTimePicker (Variables are declared from settings.js).
+    
   const todaysDate = new Date();
   const todayDate=addHours(todaysDate)
 
   
 
 
-    // console.log('This is  unique akh' ,v4())
+
   
   
 
@@ -822,309 +820,30 @@ menu:{
 
 
 
-  
 
 
 
-// const scheduledRunRef=doc(db,'ScheduledRuns', user.uid)  
-      // const doesDocExist=await getDoc(scheduledRunRef)
-      // if (doesDocExist.exists()){
-      //   console.log('Enters the first if statement.')
-      //   const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-          
-      //     if(doc.data() && !doc.data().completed){
-      //       console.log('Comes here', doc.data().activity)
-      //       console.log('This is the id it receives: ',id)
-      //       doc.data().activity.forEach(element => {
-      //         console.log('This is each element, ', element)
-      //         if(element.id===id){
-
-      //           console.log('This is entering here: ',element.id)
-      //            updateDoc(scheduledRunRef, {
-      //             activity: arrayRemove(element),
-      //           });
-      //         }
-            
-
-      //       });
-      //   }
-
-      // })
-      // return unsub;
-      // } 
- // if (doesDocExist.exists()){
-        
-      //   const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-
-      //     if(doc.data() && !doc.data().completed && doc.id===user.uid){
-      //       doc.data().activity.forEach(element => {
-      //         // console.log('This is the id wihtin the doc', element.id)
-      //         array.push(element)
-      //       });
-      //   }
-      //   setListOfScheduledRuns(array)
-      // })
-      // setScheduledRuns(true)
-      // return unsub;
-      // }
-        // if(getDocument.exists()){
-  //   console.log('enters here')
-  //   await updateDoc(scheduledRunRef,{activity:arrayUnion(detailsToSendToFirebaseAboutScheduledRuns.activity[0]), merge:true})
-
-  // }
-  // else{
-  //   console.log('enters the else')
-  //   setDoc(scheduledRunRef, detailsToSendToFirebaseAboutScheduledRuns)
-  // }
-
-
-    // console.log('the selected date year is', selectedDateTime.getFullYear());
-    // console.log('the selected date month is', selectedDateTime.getMonth());
-    // console.log('the selected date date is', selectedDateTime.getDate());
-
-    // Unique ID
-// const generateUniqueID=()=>{
-//   let randomValue=Math.floor(Math.random()*1000)
-//   let randomValue2=Math.floor(Math.random()*10000)
-//   if (randomValue===randomValue2){
-//     randomValue=randomValue-11
-//   }
-
-//   return `${user.uid}${randomValue}${randomValue2}`
-
-// }
-
-/* 
-        { userHasScheduledRuns?(
-         <FlatList
-         contentContainerStyle={{ flexGrow: 1 }}
-         data={listOfScheduledRuns}
-   
-         renderItem={({ item }) => {
-          console.log('THi is item',item)
-          // Converts it from timestamp to normal use.
-          const dateTime=item.whenUserDecidesToRun.toDate();
-           return (
-            <View style={styles.scheduledRunContainer} key={item.id}>
-               <View style={styles.scheduledRunInfo}>
-                 <Text style={styles.scheduledRunText}>Date and Time of Run: { dateTime.toLocaleDateString('')}</Text>
-                 <Text style={styles.scheduledRunText}>Time: {dateTime.toLocaleTimeString('')}</Text>
-                 <Text style={styles.scheduledRunText}>Total Running Time: {item.howLongUserRuns} minutes</Text>
-                 <Text style={styles.scheduledRunText}>Location of Run: {item.postCodeWhereTheyRan} </Text>
-               </View>
-               <View style={styles.scheduledRunButtons}>
-                 <TouchableOpacity
-                   style={styles.startButton}
-                   onPress={() => navigation.navigate('StartActivity')}
-                 >
-                   <Text style={styles.startButtonText}>Start</Text>
-                 </TouchableOpacity>
-                 <TouchableOpacity
-                   style={styles.deleteButton}
-                   onPress={() => {
-                    console.log('This is the item.id:',item.id)
-                    // console.log(item.docID)
-                    
-                    // deleteAField(item.id)
-                    deleteDocument(item.id)
-
-                   }}
-                 >
-                   <Text style={styles.deleteButtonText}>Delete</Text>
-                 </TouchableOpacity>
-               </View>
-             </View>
-           )
-         }}
-         keyExtractor={(item) => 
-          console.log('This is item.id', item.id)
-        }
-       />
-        ):
-        (
-          null
-        ) */
-        {/* } */}
-        // {
-        //   userSelectedTime?(
-        //     <Text>Good you have selected a time</Text>
-        //   ):(
-        //     <Text>You have not selected a time!</Text>
-        //   )
-        // }
 
 
 
-// const createScheduledRuns=async()=>{
-//   console.log('Comes to this function')
-//   // const scheduledRunRef=doc(db,'ScheduledRuns', generateUniqueID())
-//   // const getDocument=await getDoc(scheduledRunRef)
-//   if(postCodeOutcome&&user&&time){
-//     const docRef=await addDoc(collection(db,'ScheduledRuns'),{
-//       userID:user.uid,
-//       postCodeWhereTheyRan:postCode,
-//       whenUserDecidesToRun:new Date(gettingTheSelectedDate+"T"+timing),
-//       howLongUserRuns:time,
-//       completed:false,
-//       uniqueID:`${user.uid}${new Date()}${Math.floor(Math.random()*10000)}`
-//   })
-  
 
-//   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   
- 
-
-
-//   }
-
-  // useEffect(() => {
-  //   let unsub;
-  
-  //   const fetchScheduledRuns = async () => {
-  //     const qFiltered = query(collection(db, 'ScheduledRuns'), where('userID', '==', user.uid));
-  //     unsub = onSnapshot(qFiltered, (querySnapshot) => {
-  //       let scheduledRunsArray = [];
-  //       querySnapshot.forEach((doc) => {
-  //         scheduledRunsArray.push({id: doc.id, ...doc.data() });
-  //       });
-  //       setListOfScheduledRuns(scheduledRunsArray);
-  //       setScheduledRuns(true)
-  //     });
-  //   };
-  
-  //   fetchScheduledRuns();
-  
-  //   return () => {
-  //     if (unsub) {
-  //       unsub();
-  //     }
-  //   };
-  // }, [user.uid]);
-  
-  // const deleteDocument=async(id)=>{
-  //   console.log('Ges to this function')
-  //   const docRef=doc(db,'ScheduledRuns', id)
-  //   await deleteDoc(docRef)
-
-  // }
 
 LogBox.ignoreLogs(['Excessive number of pending callbacks']);
-  // scheduledRunContainer: {
-  //     flexDirection: 'row',
-  //     justifyContent: 'space-between',
-  //     alignItems: 'center',
-  //     backgroundColor: '#f0f0f0',
-  //     padding: 15,
-  //     borderRadius: 5,
-  //     marginBottom: 10,
-  //     borderWidth: 1,
-  //     borderColor: '#d4d4d4',
-  //   },
-  //   startButton: {
-  //     backgroundColor: '#4CAF50',
-  //     padding: 10,
-  //     borderRadius: 5,
-  //   },
-  //   deleteButton: {
-  //     backgroundColor: '#F44336',
-  //     padding: 10,
-  //     borderRadius: 5,
-  //   },
-  //   buttonText: {
-  //     color: 'white',
-  //     fontWeight: 'bold',
-  //   },
-
-
-
-
-
-
-// New WayTHAT WAS WORKING
-// useEffect(()=>{
-//   updatingSchedule()
   
-// },[user.uid, listOfScheduledRuns])
-
-
-
-// const updatingSchedule=async(timing, postCode,gettingTheSelectedDate,runTime)=>{
-//   // console.log('Reaches this function of convo')
-
-//   const docRef=doc(db,'ScheduleRuns', user.uid)
-//   const getDocOfUser=await getDoc(docRef)
-//   if(!getDocOfUser.exists()){
-    
-//       const detailsAboutTheRun = {
-//         userID:user.uid,
-//         activity:[]
-//       }
-//       await setDoc(doc(db, 'ScheduleRuns', user.uid), detailsAboutTheRun);
-//     }    
-    
-    
-//     else{
-//     // console.log('Enters the else statement.')
-//   try{
-//   if(timing&&postCode&&gettingTheSelectedDate&&runTime){
-//     // console.log('Enters the if statement within the try')
-//     const dataToBeSentToFireStore={
-//       TimeOfRun:timing,
-//       PostCode:postCode,
-//       DateOfRun:gettingTheSelectedDate,
-//       DurationOfRun:runTime,
-//       UniqueID: v4()
-//     }
-//     console.log('Adds stuff here')
-//     await updateDoc(docRef,{
-//       activity:arrayUnion(dataToBeSentToFireStore),
-//     }) 
-    
-//     console.log('Finish adding stuff to db')
-//     setScheduledRuns(true)
-//   }
-  
-// }
-// catch(err){
-//   console.log(err)
-// }
-
-
-//     }
-
-
-  
-
-
-//   }
-  // useEffect(()=>{
-  //   const fetchScheduledRuns=async()=>{
-      
-  //     const scheduledRunRef=doc(db,'ScheduleRuns', user.uid)  
-  //     const doesDocExist=await getDoc(scheduledRunRef)
-  //     const array=[]
-
-  //     if (doesDocExist.exists()){
-        
-  //       // console.log('This is does doc exist: ',doesDocExist)
-  //       const unsub=onSnapshot(scheduledRunRef, (doc)=>{
-  //         if(doc.data() && !doc.data().completed && doc.id===user.uid && doc.data().activity && doc.data().activity.length!==0 ){
-  //           doc.data().activity.forEach(element => {
-  //             // console.log('This is the id wihtin the doc', element.id)
-  //             array.push(element)
-  //           });
-
-  //           setListOfScheduledRuns(array)
-  //           // console.log('This is the list', listOfScheduledRuns)
-  //           setScheduledRuns(true)
-  //           // console.log('Has user scheduled a run: ', userHasScheduledRuns)
-  //       }
-        
-        
-  //     })
-  //     return unsub;
-  //     }
-  //   }
-  //   fetchScheduledRuns()
-  // },[listOfScheduledRuns])

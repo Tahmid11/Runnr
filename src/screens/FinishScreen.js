@@ -1,11 +1,10 @@
 
 import React,{useEffect, useState} from "react";
-import { Text, View, TextInput, TouchableOpacity, Modal,Image,StyleSheet, ScrollView,  TouchableHighlight,SafeAreaView, Button} from 'react-native'
-import { useRoute, useTheme } from '@react-navigation/native';
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
+import { Text,  TouchableOpacity, StyleSheet,SafeAreaView} from 'react-native'
+import { useRoute } from '@react-navigation/native';
+import { doc, getDoc,   updateDoc,  increment} from "firebase/firestore";
 import callingContext from '../components/callingContext';
 import { db } from "../Firebase Connectivity/Firebase";
-import { FieldValue } from "firebase/firestore";
 import { FontAwesome5 } from '@expo/vector-icons';
 const FinishScreen=({navigation})=>{
     
@@ -168,13 +167,7 @@ const FinishScreen=({navigation})=>{
       catch(err){
         // console.log('error user points:', err)
       }
-
-        
       };
-      
-
-
-
     return (
         <SafeAreaView style={styles.container}>
             <FontAwesome5 name="medal" size={100} color="#346eeb" />
@@ -230,34 +223,3 @@ const styles = StyleSheet.create({
         color: 'white',
     },
 });
-
-
-      
-//     return(
-//         <View>
-//             <FontAwesome5 name="medal" size={100} color="black" />
-//             <Text>Total Activity Time: {totalActivityTime}</Text>
-//             <Text>Total tine: {DurationOfRun}</Text>
-//             <Text>todays date: {dateTimeRunTookPlace.getFullYear()}</Text>
-           
-//             <TouchableOpacity
-//                 onPress={async()=>{
-//                     const pointsForUser=await calculatePoints()
-//                     console.log('Number of points: ',pointsForUser)
-//                     await updateUsersPoints(pointsForUser)
-//                     await updatingUserRuns(pointsForUser, dateTimeRunTookPlace)
-//                     navigation.navigate('ActivityScreen')
-//                 }}
-//             >
-//                 <Text>Done</Text>
-
-//             </TouchableOpacity>
-//         </View>
-//     )
-// }
-// export default FinishScreen;
-
-
-
-// <Text>Date of original run: {dateOfOriginalRun}</Text>
-// <Text>Time of original run: {timeOfOriginalRun}</Text>

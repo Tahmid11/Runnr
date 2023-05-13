@@ -1,18 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  TouchableHighlight,
-  SafeAreaView,
-  StyleSheet,
-  Button,
-  Alert
-} from 'react-native';
+import React, { useState,  useRef } from 'react';
+import {Text,View,TouchableOpacity,SafeAreaView,StyleSheet,Alert} from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import { Timer } from 'react-native-stopwatch-timer';
 import StopwatchTimer from 'react-native-animated-stopwatch-timer';
-
 import { Feather } from '@expo/vector-icons'; 
 import { AntDesign } from '@expo/vector-icons'; 
 
@@ -173,56 +162,3 @@ const styles = StyleSheet.create({
 
   
 
-//   const [isPlaying, setIsPlaying] = useState(true);
-//   const convertingTimeToMinutes=Number(DurationOfRun)*60
-  //   const [currentValueTimerIsOn, setCurrentValueTimerIsOn]=useState(0)
-
-    
-  // const togglePauseStart = () => {
-  //   setIsPlaying(!isPlaying);
-  // };
-  // const [done,setDone]=useState(false)
-
-
-  // const onFinish = () => {
-  //   const elapsedTime = convertingTimeToMinutes - getRemainingTime();
-  //   console.log(elapsedTime);
-  //   navigation.navigate('FinishScreen', { elapsedTime: elapsedTime });
-  // };
-
-
-//   return(
-  //     <View style={{flex:1, alignItems:'center'}}>
-  //   <CountdownCircleTimer
-  //       isPlaying={isPlaying}
-  //       duration={convertingTimeToMinutes}
-  //       colors={['#004777', '#F7B801', '#A30000', '#A30000']}
-  //       colorsTime={[convertingTimeToMinutes, Math.round((convertingTimeToMinutes/4)*3), Math.round((convertingTimeToMinutes/2)), Math.round((convertingTimeToMinutes/4))]}
-  //       onComplete={()=>{
-  //         setDone(true)
-  //       }}
-  // >
-    
-  //   {
-  //   ({ remainingTime }) => {
-      
-  //     return <Text style={{fontSize:50}}>{remainingTime}</Text>
-  //   }
-  //   }
-
-  // </CountdownCircleTimer>
-
-  // <Button title={isPlaying ? 'Pause' : 'Start'} onPress={togglePauseStart} /> 
-  // {
-  //   done&&(
-  //     <Text>Congrats you have completed the exrercise!</Text>
-  //   )
-  // }
-
-  // <Button 
-  //   title="Finish"
-  //   onPress={()=>{
-  //     onFinish()
-
-  //   }}
-  // />

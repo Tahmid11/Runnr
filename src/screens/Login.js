@@ -1,12 +1,7 @@
-import React, {useEffect} from "react";
+import React from "react";
 import { Text,View,Button, TouchableOpacity, StyleSheet } from "react-native";
 import callingContext from "../components/callingContext";
-import SplashScreen from "../components/SplashScreen";
-import { useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-
-
 const Login = ({navigation}) => {
   const { onGoogleButtonPress, setLoading,isLoading, user} = callingContext();
   const handleGoogleSignIn = async () => {

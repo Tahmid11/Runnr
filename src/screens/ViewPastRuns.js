@@ -3,8 +3,8 @@ import React,{useState, useEffect} from "react";
 import { View, Text, FlatList, StyleSheet} from "react-native";
 import { useRoute } from '@react-navigation/native';
 import callingContext from "../components/callingContext";
-import { db, storage, getDownloadURL} from '../Firebase Connectivity/Firebase';
-import { collection, doc, getDoc,  getDocs, updateDoc, arrayUnion, onSnapshot, setDoc, query, where, orderBy, limit,deleteField, arrayRemove, addDoc, deleteDoc, increment, enableMultiTabIndexedDbPersistence } from "firebase/firestore";
+import { db } from '../Firebase Connectivity/Firebase';
+import {  doc, getDoc,  onSnapshot } from "firebase/firestore";
 const ViewPastRuns=({navigation})=>{
 
   const route = useRoute();
