@@ -42,7 +42,7 @@ const ViewPastRuns=({navigation})=>{
         return (
          <View style={styles.scheduledRunContainer} key={item.UniqueID}>
             <View style={styles.scheduledRunInfo}>
-            <Text style={styles.scheduledRunText}>Date Of Run: {item.DateOfRun}</Text>
+            <Text style={styles.scheduledRunText}>Scheduled Date Of Run: {item.DateOfRun}</Text>
               <Text style={styles.scheduledRunText}>Planned Run Duration: {item.DurationOfRun} minutes</Text>
               {
                 ((((item.ActualCompletedRunTime)/1000)/60).toFixed(2))<60 && item.ActualCompletedRunTime?(
